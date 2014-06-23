@@ -1,7 +1,7 @@
 Notice: All 1.7.x changes are present in 2.0.x aswell
 
-# next
-- [FEATURE] Hooks can now return promises
+# v2.0.0-dev12
+- [FEATURE] You can now return a promise to a hook rather than use a callback
 - [FEATURE] There is now basic support for assigning a field name to an attribute `name: {type: DataTypes.STRING, field: 'full_name'}`
 - [FEATURE] It's now possible to add multiple relations to a hasMany association, modelInstance.addRelations([otherInstanceA, otherInstanceB])
 - [FEATURE] `define()` stores models in `sequelize.models` Object e.g. `sequelize.models.MyModel`
@@ -9,19 +9,26 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - [FEATURE] Support for FOR UPDATE and FOR SHARE statements [#1777](https://github.com/sequelize/sequelize/pull/1777)
 - [FEATURE] n:m createAssocation now returns the target model instance instead of the join model instance
 - [FEATURE] Extend the `foreignKey` option for associations to support a full data type definition, and not just a string
+- [FEATURE] Extract CLI into [separate projects](https://github.com/sequelize/cli).
+- [FEATURE] Sqlite now inserts dates with millisecond precision
+- [FEATURE] Sequelize.VIRTUAL datatype which provides regular attribute functionality (set, get, etc) but never persists to database.
 - [BUG] An error is now thrown if an association would create a naming conflict between the association and the foreign key when doing eager loading. Closes [#1272](https://github.com/sequelize/sequelize/issues/1272)
 - [BUG] Fix logging options for sequelize.sync
-- [INTERNALS] `bulkDeleteQuery` was removed from the MySQL / abstract query generator, since it was never used internally. Please use `deleteQuery` instead.
 - [BUG] find no longer applies limit: 1 if querying on a primary key, should fix a lot of subquery issues.
-- [FEATURE] Extract CLI into [separate projects](https://github.com/sequelize/cli).
+- [BUG] Transactions now use the pool so you will never go over your pool defined connection limit
+- [BUG] Fix use of Sequelize.literal in eager loading and when renaming attributes [#1916](https://github.com/sequelize/sequelize/pull/1916)
+- [INTERNALS] `bulkDeleteQuery` was removed from the MySQL / abstract query generator, since it was never used internally. Please use `deleteQuery` instead.
 
-#### Breaking changes
+
+#### Backwards compatability changes
 - Sequelize now returns promises instead of its custom event emitter from most calls. This affects methods that return multiple values (like `findOrCreate` or `findOrInitialize`). If your current callbacks do not accept the 2nd success parameter you might be seeing an array as the first param. Either use `.spread()` for these methods or add another argument to your callback: `.success(instance)` -> `.success(instance, created)`.
 - `.success()`/`.done()` and any other non promise methods are now deprecated (we will keep the codebase around for a few versions though). on('sql') persists for debugging purposes.
 - Model association calls (belongsTo/hasOne/hasMany) are no longer chainable. (this is to support being able to pass association references to include rather than model/as combinations)
 - `QueryInterface` no longer emits global events. This means you can no longer do things like `QueryInterface.on('showAllSchemas', function ... `
 - `sequelize.showAllSchemas` now returns an array of schemas, instead of an array containinig an array of schemas
 - `sequelize.transaction()` now returns a promise rather than a instance of Sequelize.Transaction
+- `bulkCreate`, `bulkUpdate` and `bulkDestroy` (and aliases) now take both a `hooks` and an `individualHooks` option, `hooks` defines whether or not to run the main hooks, and `individualHooks` defines whether to run hooks for each instance affected.
+- It is no longer possible to disable pooling, disable pooling will just result in a 1/1 pool.
 
 # v2.0.0-dev11
 ### Caution: This release contains many changes and is highly experimental
@@ -39,7 +46,6 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - [FEATURE] Read cli options from a file. Thanks to @codeinvain  [#1540](https://github.com/sequelize/sequelize/pull/1540)
 
 #### Backwards compatability changes
-
 - The `notNull` validator has been removed, use the Schema's `allowNull` property.
 - All Validation errors now return a sequelize.ValidationError which inherits from Error.
 - selectedValues has been removed for performance reasons, if you depend on this, please open an issue and we will help you work around it.
@@ -50,6 +56,15 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - syncOnAssocation has been removed. It only worked for n:m, and having a synchronous function (hasMany) that invokes an asynchronous function (sync) without returning an emitter does not make a lot of sense. If you (implicitly) depended on this feature, sequelize.sync is your friend. If you do not want to do a full sync, use custom through models for n:m (`M1.hasMany(M2, { through: M3})`) and sync the through model explicitly.
 - Join tables will be no longer be paranoid (have a deletedAt timestamp added), even though other models are.
 - All tables in select queries will now be aliased with the model names to be support schemas. This will affect people stuff like `where: {'table.attribute': value}
+
+# v.17.9
+- [BUG] fixes issue with custom primary keys and N:M join tables [#1929](https://github.com/sequelize/sequelize/pull/1923)
+
+# v1.7.8
+- [FEATURE] adds rlike support for mysql
+
+# v1.7.7
+- [BUG] fixes issue where count/findAndCountAll would throw on empty rows [#1849](https://github.com/sequelize/sequelize/pull/1849)
 
 # v1.7.6
 - [BUG] fixes issue where primary key is also foreign key [#1818](https://github.com/sequelize/sequelize/pull/1818)

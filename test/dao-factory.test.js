@@ -791,15 +791,13 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         , done = _.after(2, _done)
 
       this.User.bulkCreate(data).success(function() {
-        self.User.update({username: 'Bill'}, {secretValue: '42'}).done(function(err, affectedRows) {
-          expect(err).not.to.be.ok
+        self.User.update({username: 'Bill'}, {secretValue: '42'}).spread(function(affectedRows) {
           expect(affectedRows).to.equal(2)
           
           done()
         })
 
-        self.User.update({username: 'Bill'}, {secretValue: '44'}).done(function(err, affectedRows) {
-          expect(err).not.to.be.ok
+        self.User.update({username: 'Bill'}, {secretValue: '44'}).spread(function(affectedRows) {
           expect(affectedRows).to.equal(0)
           
           done()
@@ -815,8 +813,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
                     { username: 'Peter', secretValue: '42' }]
 
         this.User.bulkCreate(data).success(function () {
-          self.User.update({secretValue: '43'}, {username: 'Peter'}, {limit: 1}).done(function (err, affectedRows) {
-            expect(err).not.to.be.ok
+          self.User.update({secretValue: '43'}, {username: 'Peter'}, {limit: 1}).spread(function(affectedRows) {
             expect(affectedRows).to.equal(1)
             done()
           })
@@ -894,13 +891,8 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
                 expect(users[0].username).to.equal("Peter")
                 expect(users[1].username).to.equal("Paul")
 
-                if (dialect === "sqlite") {
-                  expect(moment(users[0].deletedAt).format('YYYY-MM-DD h:mm')).to.equal(date)
-                  expect(moment(users[1].deletedAt).format('YYYY-MM-DD h:mm')).to.equal(date)
-                } else {
-                  expect(moment(users[0].deletedAt).utc().format('YYYY-MM-DD h:mm')).to.equal(date)
-                  expect(moment(users[1].deletedAt).utc().format('YYYY-MM-DD h:mm')).to.equal(date)
-                }
+                expect(moment(users[0].deletedAt).utc().format('YYYY-MM-DD h:mm')).to.equal(date)
+                expect(moment(users[1].deletedAt).utc().format('YYYY-MM-DD h:mm')).to.equal(date)
                 done()
               })
             })
@@ -2032,6 +2024,52 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
     })
 
   })
+  
+  if (dialect !== 'sqlite') {
+    it('supports multiple async transactions', function(done) {
+      this.timeout(25000);
+      Support.prepareTransactionTest(this.sequelize, function(sequelize) {
+        var User = sequelize.define('User', { username: Sequelize.STRING })
+        var testAsync = function(i, done) {
+          sequelize.transaction().then(function(t) {
+            return User.create({
+              username: 'foo'
+            }, {
+              transaction: t
+            }).then(function () {
+              return User.findAll({ 
+                where: {
+                  username: "foo"
+                }
+              }).then(function (users) {
+                expect(users).to.have.length(0);
+              });
+            }).then(function () {
+              return User.findAll({ 
+                where: {
+                  username: "foo"
+                },
+                transaction: t
+              }).then(function (users) {
+                expect(users).to.have.length(1);
+              });
+            }).then(function () {
+              return t;
+            });
+          }).then(function (t) {
+            return t.rollback();
+          }).nodeify(done);
+        }
+        User.sync({ force: true }).success(function() {
+          var tasks = []
+          for (var i = 0; i < 1000; i++) {
+            tasks.push(testAsync.bind(this, i))
+          };
+          async.parallelLimit(tasks, (sequelize.config.pool && sequelize.config.pool.max || 5) - 1, done); // Needs to be one less than 1 else the non transaction query won't ever get a connection
+        });
+      });
+    });
+  }
 
   describe('Unique', function() {
     it("should set unique when unique is true", function(done) {

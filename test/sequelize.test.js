@@ -91,6 +91,7 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
         })
 
         it('triggers the actual adapter error', function(done) {
+
           this
             .sequelizeWithInvalidConnection
             .authenticate()
@@ -98,16 +99,16 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
               if (dialect === 'mariadb') {
                 expect(err.message).to.match(/Access denied for user/)
               } else if (dialect === 'postgres') {
-                // When the test is run with only it produces:
-                // Error: Error: Failed to authenticate for PostgresSQL. Please double check your settings.
-                // When its run with all the other tests it produces:
-                // Error: invalid port number: "99999"
-                expect(err.message).to.match(/invalid port number/)
+                expect(
+                  err.message.match(/Failed to authenticate for PostgresSQL/) ||
+                  err.message.match(/invalid port number/)
+                ).to.be.ok
               } else {
                 expect(err.message).to.match(/Failed to authenticate/)
               }
 
               done()
+              
             })
         })
       })
@@ -887,6 +888,77 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
         })
       }
 
+      it('supports nested transactions using savepoints', function(done) {
+        var self = this
+        var User = this.sequelize.define('Users', { username: DataTypes.STRING })
+
+        User.sync({ force: true }).success(function() {
+          self.sequelizeWithTransaction.transaction(function(t1) {
+            User.create({ username: 'foo' }, { transaction: t1 }).success(function(user) {
+              self.sequelizeWithTransaction.transaction({ transaction: t1 }, function(t2) {
+                user.updateAttributes({ username: 'bar' }, { transaction: t2 }).success(function() {
+                  t2.commit().then(function() {
+                    user.reload({ transaction: t1 }).success(function(newUser) {
+                      expect(newUser.username).to.equal('bar')
+
+                      t1.commit().then(function() {
+                        done()
+                      });
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+
+      it('supports rolling back a nested transaction', function(done) {
+        var self = this
+        var User = this.sequelize.define('Users', { username: DataTypes.STRING })
+
+        User.sync({ force: true }).success(function() {
+          self.sequelizeWithTransaction.transaction(function(t1) {
+            User.create({ username: 'foo' }, { transaction: t1 }).success(function(user) {
+              self.sequelizeWithTransaction.transaction({ transaction: t1 }, function(t2) {
+                user.updateAttributes({ username: 'bar' }, { transaction: t2 }).success(function() {
+                  t2.rollback().then(function() {
+                    user.reload({ transaction: t2 }).success(function(newUser) {
+                      expect(newUser.username).to.equal('foo')
+
+                      t1.commit().then(function() {
+                        done()
+                      });
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+
+      it('supports rolling back outermost transaction', function(done) {
+        var self = this
+        var User = this.sequelize.define('Users', { username: DataTypes.STRING })
+
+        User.sync({ force: true }).success(function() {
+          self.sequelizeWithTransaction.transaction(function(t1) {
+            User.create({ username: 'foo' }, { transaction: t1 }).success(function(user) {
+              self.sequelizeWithTransaction.transaction({ transaction: t1 }, function(t2) {
+                user.updateAttributes({ username: 'bar' }, { transaction: t2 }).success(function() {
+                  t1.rollback().then(function() {
+                    User.findAll().success(function(users) {
+                      expect(users.length).to.equal(0);
+                      done()
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
     })
   })
 })

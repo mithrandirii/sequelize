@@ -338,6 +338,35 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
           })
         })
       })
+
+      it('allows to update join table attributes with primary keys other than "id"', function () {
+        var Article = this.sequelize.define('Article', {aid: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}, title: DataTypes.STRING})
+          , Label = this.sequelize.define('Label', {lid: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}, text: DataTypes.STRING})
+          , ArticleHasLabel = this.sequelize.define('ArticleHasLabel', {color: DataTypes.ENUM(["red", "green", "blue"])})
+
+        Article.hasMany(Label, {through: ArticleHasLabel})
+        Label.hasMany(Article, {through: ArticleHasLabel})
+
+        return this.sequelize.sync({ force: true }).then(function () {
+          return Article.create().then(function (article) {
+            return Label.create({ text: "cheap" }).then(function (label1) {
+              return Label.create({ text: "steal" }).then(function (label2) {
+                label2.ArticleHasLabel = {color: "green"}
+                return article.setLabels([label1, label2]).then(function () {
+                  label1.ArticleHasLabel = {color: "red"}
+                  article.setLabels([label1, label2]).then(function () {
+                    article.getLabels().then(function (labels) {
+                      expect(labels).to.have.length(2)
+                      expect(labels[0].ArticleHasLabel.color).to.equal("red")
+                      expect(labels[1].ArticleHasLabel.color).to.equal("green")
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
     })
 
     describe('addAssociations', function() {
@@ -632,7 +661,7 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
         this.User.create({ username: 'foo' }).success(function(user) {
           self.Task.create({ title: 'task1' }).success(function(task1) {
             self.Task.create({ title: 'task2' }).success(function(task2) {
-              user.setTasks([task1, task2]).on('sql', spy).on('sql', _.after(2, function (sql) { // We don't care about SELECt, only UPDAET
+              user.setTasks([task1, task2]).on('sql', spy).on('sql', _.after(2, function (sql) { // We don't care about SELECT, only UPDATE
                 expect(sql).to.have.string("UPDATE")
                 expect(sql).to.have.string("IN (1,2)")
               })).success(function () {
@@ -746,6 +775,17 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
                 })
               })
             })
+          })
+        })
+      })
+
+      it('gets all associated objects with all fields', function(done) {
+        this.User.find({where: {username: 'John'}}).success(function (john) {
+          john.getTasks().success(function (tasks) {
+            tasks[0].attributes.forEach(function(attr) {
+              expect(tasks[0]).to.have.property(attr)
+            })
+            done()
           })
         })
       })
