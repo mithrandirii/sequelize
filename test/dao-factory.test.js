@@ -548,7 +548,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         var User = sequelize.define('User', { username: Sequelize.STRING, foo: Sequelize.STRING })
 
         User.sync({ force: true }).success(function() {
-          sequelize.transaction(function(t) {
+          sequelize.transaction().then(function(t) {
             User.create({ username: 'foo' }, { transaction: t }).success(function() {
               User.find({ where: { username: 'foo' }, transaction: t }).success(function(user) {
                 expect(user).to.not.be.null
@@ -567,7 +567,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         var User = sequelize.define('User', { username: Sequelize.STRING, foo: Sequelize.STRING })
 
         User.sync({ force: true }).success(function() {
-          sequelize.transaction(function(t) {
+          sequelize.transaction().then(function(t) {
             User.create({ username: 'foo' }, { transaction: t }).success(function() {
               User.findOrInitialize({ username: 'foo' }).spread(function(user1) {
                 User.findOrInitialize({ username: 'foo' }, { transaction: t }).spread(function(user2) {
@@ -646,7 +646,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
 
         User.sync({ force: true }).done(function() {
           User.create({ username: 'foo' }).done(function() {
-            sequelize.transaction(function(t) {
+            sequelize.transaction().then(function(t) {
               User.update({ username: 'bar' }, {}, { transaction: t }).done(function(err) {
                 User.all().done(function(err, users1) {
                   User.all({ transaction: t }).done(function(err, users2) {
@@ -805,6 +805,32 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
       })
     })
 
+    if (dialect === "postgres") {
+      it('returns the affected rows if `options.returning` is true', function(_done) {
+       var self = this
+          , data = [{ username: 'Peter', secretValue: '42' },
+                    { username: 'Paul',  secretValue: '42' },
+                    { username: 'Bob',   secretValue: '43' }]
+          , done = _.after(2, _done)
+
+        this.User.bulkCreate(data).success(function() {
+          self.User.update({ username: 'Bill' }, { secretValue: '42' }, { returning: true }).spread(function(count, rows) {
+            expect(count).to.equal(2)
+            expect(rows).to.have.length(2)
+
+            done()
+          })
+
+          self.User.update({ username: 'Bill'}, { secretValue: '44' }, { returning: true }).spread(function(count, rows) {
+            expect(count).to.equal(0)
+            expect(rows).to.have.length(0)
+
+            done()
+          })
+        })
+      })
+    }
+
     if(Support.dialectIsMySQL()) {
       it('supports limit clause', function (done) {
         var self = this
@@ -830,7 +856,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
 
         User.sync({ force: true }).success(function() {
           User.create({ username: 'foo' }).success(function() {
-            sequelize.transaction(function(t) {
+            sequelize.transaction().then(function(t) {
               User.destroy({}, { transaction: t }).success(function() {
                 User.count().success(function(count1) {
                   User.count({ transaction: t }).success(function(count2) {
@@ -1095,7 +1121,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         var User = sequelize.define('User', { username: Sequelize.STRING })
 
         User.sync({ force: true }).success(function() {
-          sequelize.transaction(function(t) {
+          sequelize.transaction().then(function(t) {
             User.create({ username: 'foo' }, { transaction: t }).success(function() {
               User.count().success(function(count1) {
                 User.count({ transaction: t }).success(function(count2) {
@@ -1173,7 +1199,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         var User = sequelize.define('User', { age: Sequelize.INTEGER })
 
         User.sync({ force: true }).success(function() {
-          sequelize.transaction(function(t) {
+          sequelize.transaction().then(function(t) {
             User.bulkCreate([{ age: 2 }, { age: 5 }, { age: 3 }], { transaction: t }).success(function() {
               User.min('age').success(function(min1) {
                 User.min('age', { transaction: t }).success(function(min2) {
@@ -1262,7 +1288,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
         var User = sequelize.define('User', { age: Sequelize.INTEGER })
 
         User.sync({ force: true }).success(function() {
-          sequelize.transaction(function(t) {
+          sequelize.transaction().then(function(t) {
             User.bulkCreate([{ age: 2 }, { age: 5 }, { age: 3 }], { transaction: t }).success(function() {
               User.max('age').success(function(min1) {
                 User.max('age', { transaction: t }).success(function(min2) {
@@ -1803,7 +1829,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
           var User = sequelize.define('User', { username: Sequelize.STRING })
 
           User.sync({ force: true }).success(function() {
-            sequelize.transaction(function(t) {
+            sequelize.transaction().then(function(t) {
               User.create({ username: 'foo' }, { transaction: t }).success(function() {
                 User.where({ username: "foo" }).exec().success(function(users1) {
                   User.where({ username: "foo" }).exec({ transaction: t }).success(function(users2) {
