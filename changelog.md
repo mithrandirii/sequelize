@@ -1,5 +1,9 @@
 Notice: All 1.7.x changes are present in 2.0.x aswell
 
+# Next
+- [FEATURE] Added to option of setting a timezone offset in the sequelize constructor (`timezone` option). This timezone is used when initializing a connection (using `SET TIME ZONE` or equivalent), and when converting a timestamp string from the DB to a JS date with mysql (postgres stores the timezone, so for postgres we rely on what's in the DB).
+
+
 # v2.0.0-dev12
 - [FEATURE] You can now return a promise to a hook rather than use a callback
 - [FEATURE] There is now basic support for assigning a field name to an attribute `name: {type: DataTypes.STRING, field: 'full_name'}`
