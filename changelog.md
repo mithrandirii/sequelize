@@ -6,10 +6,12 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - [FEATURE] Added support for passing an `indexes` array in options to `sequelize.define`. [#1485](https://github.com/sequelize/sequelize/issues/1485). See API reference for details.
 - [FEATURE/INTERNALS] Standardized the output from `QueryInterface.showIndex`.
 - [FEATURE] Include deleted rows in find [#2083](https://github.com/sequelize/sequelize/pull/2083)
+- [FEATURE] Make addSingular and addPlural for n:m assocations (fx `addUser` and `addUsers` now both accept an array or an instance.
 - [BUG] Hid `dottie.transform` on raw queries behind a flag (`nest`) [#2064](https://github.com/sequelize/sequelize/pull/2064)
 - [BUG] Fixed problems with transcation parameter being removed / not passed on in associations [#1789](https://github.com/sequelize/sequelize/issues/1789) and [#1968](https://github.com/sequelize/sequelize/issues/1968)
 - [BUG] Fix problem with minConnections. [#2048](https://github.com/sequelize/sequelize/issues/2048)
 - [BUG] Fix default scope being overwritten [#2087](https://github.com/sequelize/sequelize/issues/2087)
+- [BUG] Fixed updatedAt timestamp not being set in bulk create when validate = true. [#1962](https://github.com/sequelize/sequelize/issues/1962)
 - [INTERNALS] Replaced lingo with inflection
 - [INTERNALS] Removed underscore.string dependency and moved a couple of helper functions from `Utils._` to `Utils` 
 - [INTERNALS] Update dependencies
@@ -26,6 +28,14 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - Model names are now used more verbatim in associations. This means that if you have a model named `Task` (plural T), or an association specifying `{ as: 'Task' }`, the tasks will be returned as `relatedModel.Tasks` instead of `relatedModel.tasks`. For more information and how to mitigate this, see https://github.com/sequelize/sequelize/wiki/Upgrading-to-2.0#inflection-replaces-lingo-and-changes-to-naming-conventions
 - Removed the freezeAssociations option - use model and assocation names instead to provide the plural form yourself
 - Removed sequelize.language option (not supported by inflection)
+- Error handling has been refactored. Code that listens for :
+    + All Error classes properly inherit from Error and a common SequelizeBaseError base
+    + Instance Validator returns a single instance of a ValidationError which contains an errors array property. This property contains individual error items for each failed validation.
+    + ValidationError includes a `get(path)` method to find all broken validations for a path on an instance. To migrate existing error handling, switch from array indexing to using the get method:
+        
+        Old: `err.validateCustom[0]` 
+        New: `err.get('validateCustom')[0]` 
+       
 
 # v2.0.0-dev12
 - [FEATURE] You can now return a promise to a hook rather than use a callback
