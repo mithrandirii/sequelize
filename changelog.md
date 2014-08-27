@@ -19,6 +19,7 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
     + moment 2.5.0 -> 2.7.0
     + generic-pool 2.0.4 -> 2.1.1
     + sql 0.35.0 -> 0.39.0
+- [INTERNALS] Use a transaction inside `findOrCreate`, and handle unique constraint errors if multiple calls are issues concurrently on the same transaction
 
 #### Backwards compatability changes
 - We are using a new inflection library, which should make pluralization and singularization in general more robust. However, a couple of pluralizations have changed as a result:
@@ -35,6 +36,7 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
         
         Old: `err.validateCustom[0]` 
         New: `err.get('validateCustom')[0]` 
+- The syntax for findOrCreate has changed, to be more in line with the rest of the library. `Model.findOrCreate(where, defaults);` becomes `Model.findOrCreate({ where: where, defaults: defaults });`.
        
 
 # v2.0.0-dev12
@@ -94,6 +96,11 @@ Notice: All 1.7.x changes are present in 2.0.x aswell
 - syncOnAssocation has been removed. It only worked for n:m, and having a synchronous function (hasMany) that invokes an asynchronous function (sync) without returning an emitter does not make a lot of sense. If you (implicitly) depended on this feature, sequelize.sync is your friend. If you do not want to do a full sync, use custom through models for n:m (`M1.hasMany(M2, { through: M3})`) and sync the through model explicitly.
 - Join tables will be no longer be paranoid (have a deletedAt timestamp added), even though other models are.
 - All tables in select queries will now be aliased with the model names to be support schemas. This will affect people stuff like `where: {'table.attribute': value}
+
+# v1.7.10
+- [FEATURE] ilike support for postgres [#2122](https://github.com/sequelize/sequelize/pull/2122)
+- [FEATURE] distinct option for count [#2079](https://github.com/sequelize/sequelize/pull/2079)
+- [BUG] various fixes
 
 # v1.7.9
 - [BUG] fixes issue with custom primary keys and N:M join tables [#1929](https://github.com/sequelize/sequelize/pull/1923)
