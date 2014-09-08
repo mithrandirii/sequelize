@@ -31,6 +31,10 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
       this.Account = this.sequelize.define('Account', {
         accountName: DataTypes.STRING
       });
+      this.Student = this.sequelize.define('Student', {
+          no:     {type:DataTypes.INTEGER,primaryKey:true},
+          name: {type:DataTypes.STRING,allowNull:false},
+      })
 
       return this.sequelize.sync({ force: true });
     });
@@ -131,6 +135,30 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
 
         done()
       })
+    })
+
+    it("should release transaction when meeting errors", function(){
+        var self = this
+
+        var test = function(times) {
+            if (times > 10) {
+                return true;
+            }
+            return self.Student.findOrCreate({
+              where: {
+                no: 1
+              }
+            })
+            .timeout(1000)
+            .catch(Promise.TimeoutError,function(e){
+                throw new Error(e)
+            })
+            .catch(Sequelize.ValidationError,function(err){
+                return test(times+1);
+            })
+        }
+
+        return test(0);
     })
 
     describe('several concurrent calls', function () {
@@ -327,6 +355,18 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
           done()
         })
       })
+    })
+
+    it('should work with a non-id named uuid primary key columns', function () {
+      var Monkey = this.sequelize.define('Monkey', {
+        monkeyId: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4, allowNull: false }
+      });
+
+      return this.sequelize.sync({force: true}).then(function () {
+        return Monkey.create();
+      }).then(function (monkey) {
+        expect(monkey.get('monkeyId')).to.be.ok;
+      });
     })
 
     it('is possible to use functions as default values', function (done) {
