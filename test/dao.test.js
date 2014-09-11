@@ -623,8 +623,8 @@ describe(Support.getTestDialectTeaser("DAO"), function () {
       Book.hasMany(Page)
       Page.belongsTo(Book)
 
-      Book.sync().success(function() {
-        Page.sync().success(function() {
+      Book.sync({force: true}).success(function() {
+        Page.sync({force: true}).success(function() {
           Book.create({ title: 'A very old book' }).success(function(book) {
             Page.create({ content: 'om nom nom' }).success(function(page) {
               book.setPages([ page ]).success(function() {
@@ -642,7 +642,7 @@ describe(Support.getTestDialectTeaser("DAO"), function () {
                       expect(leBook.Pages[0].content).to.equal('something totally different')
                       expect(page.content).to.equal('something totally different')
                       done()
-                    })
+                    });
                   })
                 })
               })
@@ -1304,6 +1304,90 @@ describe(Support.getTestDialectTeaser("DAO"), function () {
         done()
       })
     })
+
+    it("sql should have paranoid condition", function ( done ) {
+      var self = this;
+
+      self.ParanoidUser.create({ username: 'cuss' })
+        .then(function () {
+          return self.ParanoidUser.findAll();
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 1 );
+
+          return users[ 0 ].destroy();
+        })
+        .then(function () {
+          return self.ParanoidUser.findAll();
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 0 );
+        })
+        .done( done )
+        .catch( done );
+    });
+
+    it("sequelize.and as where should include paranoid condition", function ( done ) {
+      var self = this;
+
+      self.ParanoidUser.create({ username: 'cuss' })
+        .then(function () {
+          return self.ParanoidUser.findAll({
+            where: self.sequelize.and({
+              username: 'cuss'
+            })
+          });
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 1 );
+
+          return users[ 0 ].destroy();
+        })
+        .then(function () {
+          return self.ParanoidUser.findAll({
+            where: self.sequelize.and({
+              username: 'cuss'
+            })
+          });
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 0 );
+        })
+        .done( done )
+        .catch( done );
+
+    });
+
+    it("sequelize.or as where should include paranoid condition", function ( done ) {
+      var self = this;
+
+      self.ParanoidUser.create({ username: 'cuss' })
+        .then(function () {
+          return self.ParanoidUser.findAll({
+            where: self.sequelize.or({
+              username: 'cuss'
+            })
+          });
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 1 );
+
+          return users[ 0 ].destroy();
+        })
+        .then(function () {
+          return self.ParanoidUser.findAll({
+            where: self.sequelize.or({
+              username: 'cuss'
+            })
+          });
+        })
+        .then(function ( users ) {
+          expect( users ).to.have.length( 0 );
+        })
+        .done( done )
+        .catch( done );
+
+    });
 
     it("escapes a single single quotes properly in where clauses", function(done) {
       var self = this
