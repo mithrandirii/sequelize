@@ -550,6 +550,31 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
           return this.t.rollback();
         });
       });
+
+      it('supports passing the field option', function () {
+        var Article = this.sequelize.define('Article', {
+          'title': DataTypes.STRING
+        });
+        var Label = this.sequelize.define('Label', {
+          'text': DataTypes.STRING
+        });
+
+        Article.hasMany(Label);
+
+        return this.sequelize.sync({force: true}).then(function () {
+          return Article.create();
+        }).then(function (article) {
+          return article.createLabel({
+            text: 'yolo'
+          }, {
+            fields: ['text']
+          }).return(article);
+        }).then(function (article) {
+          return article.getLabels();
+        }).then(function (labels) {
+          expect(labels.length).to.be.ok;
+        });
+      });
     });
 
     describe("getting assocations with options", function() {
@@ -894,9 +919,9 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
         }).then(function(projects) {
           expect(projects).to.have.length(1);
           var project = projects[0];
-          expect(project.ProjectUsers).to.be.defined;
+          expect(project.ProjectUser).to.be.defined;
           expect(project.status).not.to.exist;
-          expect(project.ProjectUsers.status).to.equal('active');
+          expect(project.ProjectUser.status).to.equal('active');
         });
       });
     });
@@ -1087,25 +1112,49 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
             isAdmin: Sequelize.BOOLEAN
           });
 
-          User.hasMany(Group, { through: UserGroups });
-          Group.hasMany(User, { through: UserGroups });
+        User.hasMany(Group, { through: UserGroups });
+        Group.hasMany(User, { through: UserGroups });
 
-          return this.sequelize.sync({ force: true }).then(function () {
-            return Group.create({});
-          }).then(function (group) {
-            return Promise.join(
-              group.createUser({ id: 1 }, { isAdmin: true }),
-              group.createUser({ id: 2 }, { isAdmin: false }),
-              function () {
-                return UserGroups.findAll();
-              }
-            );
-          }).then(function (userGroups) {
-            expect(userGroups[0].userId).to.equal(1);
-            expect(userGroups[0].isAdmin).to.be.ok;
-            expect(userGroups[1].userId).to.equal(2);
-            expect(userGroups[1].isAdmin).not.to.be.ok;
+        return this.sequelize.sync({ force: true }).then(function () {
+          return Group.create({});
+        }).then(function (group) {
+          return Promise.join(
+            group.createUser({ id: 1 }, { isAdmin: true }),
+            group.createUser({ id: 2 }, { isAdmin: false }),
+            function () {
+              return UserGroups.findAll();
+            }
+          );
+        }).then(function (userGroups) {
+          userGroups.sort(function (a, b) {
+            return a.userId < b.userId ? - 1 : 1;
           });
+          expect(userGroups[0].userId).to.equal(1);
+          expect(userGroups[0].isAdmin).to.be.ok;
+          expect(userGroups[1].userId).to.equal(2);
+          expect(userGroups[1].isAdmin).not.to.be.ok;
+        });
+      });
+
+      it('supports using the field parameter', function () {
+        var User = this.sequelize.define('User', { username: DataTypes.STRING })
+          , Task = this.sequelize.define('Task', { title: DataTypes.STRING });
+
+        User.hasMany(Task);
+        Task.hasMany(User);
+
+        return this.sequelize.sync({ force: true }).then(function() {
+          return Task.create({ title: 'task' });
+        }).bind({}).then(function(task) {
+          this.task = task;
+          return task.createUser({ username: 'foo' }, {fields: ['username']});
+        }).then(function(createdUser) {
+          expect(createdUser.Model).to.equal(User);
+          expect(createdUser.username).to.equal('foo');
+          return this.task.getUsers();
+        }).then(function(_users) {
+          expect(_users).to.have.length(1);
+        });
       });
     });
 
@@ -1363,7 +1412,7 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
           expect(associationName).not.to.equal(this.User.tableName);
           expect(associationName).not.to.equal(this.Task.tableName);
 
-          var through = this.User.associations[associationName].through;
+          var through = this.User.associations[associationName].through.model;
           if (typeof through !== 'undefined') {
             expect(through.tableName).to.equal(associationName);
           }
@@ -1390,7 +1439,7 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
         expect(ParanoidTask.options.paranoid).to.be.ok;
 
         _.forEach(ParanoidUser.associations, function (association) {
-          expect(association.through.options.paranoid).not.to.be.ok;
+          expect(association.through.model.options.paranoid).not.to.be.ok;
         });
       });
     });
@@ -1472,7 +1521,7 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
 
         _.each([this.UserTasks, this.UserTasks2], function (model) {
           fk = Object.keys(model.options.uniqueKeys)[0];
-          expect(model.options.uniqueKeys[fk].fields).to.deep.equal([ 'TaskId', 'UserId' ]);
+          expect(model.options.uniqueKeys[fk].fields.sort()).to.deep.equal([ 'TaskId', 'UserId' ]);
         });
       });
 
@@ -1538,8 +1587,8 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
 
             expect(project.UserProjects).to.be.defined;
             expect(project.status).not.to.exist;
-            expect(project.UserProjects.status).to.equal('active');
-            expect(project.UserProjects.data).to.equal(42);
+            expect(project.UserProject.status).to.equal('active');
+            expect(project.UserProject.data).to.equal(42);
           });
         });
 
@@ -1556,8 +1605,8 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
 
             expect(project.UserProjects).to.be.defined;
             expect(project.status).not.to.exist;
-            expect(project.UserProjects.status).to.equal('active');
-            expect(project.UserProjects.data).not.to.exist;
+            expect(project.UserProject.status).to.equal('active');
+            expect(project.UserProject.data).not.to.exist;
           });
         });
       });
@@ -1841,9 +1890,9 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
         User.hasMany(Group, { as: 'MyGroups', through: 'group_user'});
         Group.hasMany(User, { as: 'MyUsers', through: 'group_user'});
 
-        expect(Group.associations.MyUsers.through === User.associations.MyGroups.through);
-        expect(Group.associations.MyUsers.through.rawAttributes.UserId).to.exist;
-        expect(Group.associations.MyUsers.through.rawAttributes.GroupId).to.exist;
+        expect(Group.associations.MyUsers.through.model === User.associations.MyGroups.through.model);
+        expect(Group.associations.MyUsers.through.model.rawAttributes.UserId).to.exist;
+        expect(Group.associations.MyUsers.through.model.rawAttributes.GroupId).to.exist;
       });
 
       it("correctly identifies its counterpart when through is a model", function () {
@@ -1854,10 +1903,10 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
         User.hasMany(Group, { as: 'MyGroups', through: UserGroup});
         Group.hasMany(User, { as: 'MyUsers', through: UserGroup});
 
-        expect(Group.associations.MyUsers.through === User.associations.MyGroups.through);
+        expect(Group.associations.MyUsers.through.model === User.associations.MyGroups.through.model);
 
-        expect(Group.associations.MyUsers.through.rawAttributes.UserId).to.exist;
-        expect(Group.associations.MyUsers.through.rawAttributes.GroupId).to.exist;
+        expect(Group.associations.MyUsers.through.model.rawAttributes.UserId).to.exist;
+        expect(Group.associations.MyUsers.through.model.rawAttributes.GroupId).to.exist;
       });
     });
   });
@@ -2234,15 +2283,15 @@ describe(Support.getTestDialectTeaser("HasMany"), function() {
 
         expect(Task.rawAttributes.uid).not.to.be.defined;
 
-        expect(Task.associations.tasksusers.through.rawAttributes.taskId).to.be.defined;
-        expect(Task.associations.tasksusers.through.rawAttributes.taskId.allowNull).to.be.false;
-        expect(Task.associations.tasksusers.through.rawAttributes.taskId.references).to.equal(Task.getTableName());
-        expect(Task.associations.tasksusers.through.rawAttributes.taskId.referencesKey).to.equal('id');
+        expect(Task.associations.tasksusers.through.model.rawAttributes.taskId).to.be.defined;
+        expect(Task.associations.tasksusers.through.model.rawAttributes.taskId.allowNull).to.be.false;
+        expect(Task.associations.tasksusers.through.model.rawAttributes.taskId.references).to.equal(Task.getTableName());
+        expect(Task.associations.tasksusers.through.model.rawAttributes.taskId.referencesKey).to.equal('id');
 
-        expect(Task.associations.tasksusers.through.rawAttributes.uid).to.be.defined;
-        expect(Task.associations.tasksusers.through.rawAttributes.uid.allowNull).to.be.false;
-        expect(Task.associations.tasksusers.through.rawAttributes.uid.references).to.equal(User.getTableName());
-        expect(Task.associations.tasksusers.through.rawAttributes.uid.referencesKey).to.equal('id');
+        expect(Task.associations.tasksusers.through.model.rawAttributes.uid).to.be.defined;
+        expect(Task.associations.tasksusers.through.model.rawAttributes.uid.allowNull).to.be.false;
+        expect(Task.associations.tasksusers.through.model.rawAttributes.uid.references).to.equal(User.getTableName());
+        expect(Task.associations.tasksusers.through.model.rawAttributes.uid.referencesKey).to.equal('id');
       });
 
       it('works when taking a column directly from the object', function () {
