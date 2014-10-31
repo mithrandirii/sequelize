@@ -680,8 +680,8 @@ describe(Support.getTestDialectTeaser("Includes with schemas"), function () {
               {model: Tag}
             ],
             order: [
-              ['id', 'ASC'],
-              [Tag, 'id', 'ASC']
+              ['Product.id', 'ASC'],
+              ['Tags.id', 'ASC']
             ]
           }).done(function (err, products) {
             expect(err).not.to.be.ok
@@ -1316,7 +1316,7 @@ describe(Support.getTestDialectTeaser("Includes with schemas"), function () {
                     ]}
                   ],
                   order: [
-                    ['id', 'ASC']
+                    ['User.id', 'ASC']
                   ]
                 }).done(function (err, users) {
                   expect(err).not.to.be.ok
@@ -1401,7 +1401,7 @@ describe(Support.getTestDialectTeaser("Includes with schemas"), function () {
           ],
           limit: 3,
           order: [
-            ['id', 'ASC']
+            [self.models.Product.name+'.id', 'ASC']
           ]
         }).done(function (err, products) {
           expect(err).not.to.be.ok
@@ -1430,7 +1430,7 @@ describe(Support.getTestDialectTeaser("Includes with schemas"), function () {
           ],
           limit: 6,
           order: [
-            ['id', 'ASC']
+            ['Product.id', 'ASC']
           ]
         }).done(function (err, products) {
           expect(err).not.to.be.ok
@@ -1460,7 +1460,7 @@ describe(Support.getTestDialectTeaser("Includes with schemas"), function () {
           ],
           limit: 10,
           order: [
-            ['id', 'ASC']
+            ['Product.id', 'ASC']
           ]
         }).done(function (err, products) {
           expect(err).not.to.be.ok
