@@ -647,7 +647,11 @@ The success handler will always receive an object with two properties&colon;
 ```js
 Project
   .findAndCountAll({
-     where: ["title LIKE 'foo%'"],
+     where: {
+        title: {
+            like: 'foo%'
+        }
+     },
      offset: 10,
      limit: 2
   })
@@ -703,7 +707,13 @@ Project.findAll({
       lte: 10,            // id 
       ne: 20,             // id != 20
       between: [6, 10],   // BETWEEN 6 AND 10
-      nbetween: [11, 15]  // NOT BETWEEN 11 AND 15
+      nbetween: [11, 15], // NOT BETWEEN 11 AND 15
+      in: [1, 2],         // IN [1, 2]
+      like: '%hat',       // LIKE '%hat'
+      nlike: '%hat'       // NOT LIKE '%hat'
+      ilike: '%hat'       // ILIKE '%hat' (case insensitive)
+      nilike: '%hat'      // NOT ILIKE '%hat'
+      overlap: [1, 2]     // && [1, 2] (PG array overlap operator)
     }
   }
 })
