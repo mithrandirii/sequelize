@@ -11,6 +11,8 @@ var chai      = require('chai')
   , _         = require('lodash')
   , moment    = require('moment')
   , async     = require('async')
+  , current   = Support.sequelize;
+
 
 chai.use(datetime)
 chai.config.includeStack = true
@@ -33,22 +35,24 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
   })
 
   describe('findAll', function() {
-    it('supports transactions', function(done) {
-      Support.prepareTransactionTest(this.sequelize, function(sequelize) {
-        var User = sequelize.define('User', { username: Sequelize.STRING })
+    if (current.dialect.supports.transactions) {
+      it('supports transactions', function(done) {
+        Support.prepareTransactionTest(this.sequelize, function(sequelize) {
+          var User = sequelize.define('User', { username: Sequelize.STRING })
 
-        User.sync({ force: true }).success(function() {
-          sequelize.transaction().then(function(t) {
-            User.create({ username: 'foo' }, { transaction: t }).success(function() {
-              User.findAll({ username: 'foo' }).success(function(users1) {
-                User.findAll({ transaction: t }).success(function(users2) {
-                  User.findAll({ username: 'foo' }, { transaction: t }).success(function(users3) {
-                    expect(users1.length).to.equal(0)
-                    expect(users2.length).to.equal(1)
-                    expect(users3.length).to.equal(1)
+          User.sync({ force: true }).success(function() {
+            sequelize.transaction().then(function(t) {
+              User.create({ username: 'foo' }, { transaction: t }).success(function() {
+                User.findAll({ username: 'foo' }).success(function(users1) {
+                  User.findAll({ transaction: t }).success(function(users2) {
+                    User.findAll({ username: 'foo' }, { transaction: t }).success(function(users3) {
+                      expect(users1.length).to.equal(0)
+                      expect(users2.length).to.equal(1)
+                      expect(users3.length).to.equal(1)
 
-                    t.rollback().success(function() {
-                      done()
+                      t.rollback().success(function() {
+                        done()
+                      })
                     })
                   })
                 })
@@ -57,7 +61,7 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
           })
         })
       })
-    })
+    }
 
     describe('special where conditions/smartWhere object', function() {
       beforeEach(function(done) {
@@ -1364,26 +1368,28 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
       })
     })
 
-    it('supports transactions', function(done) {
-      Support.prepareTransactionTest(this.sequelize, function(sequelize) {
-        var User = sequelize.define('User', { username: Sequelize.STRING })
+    if (current.dialect.supports.transactions) {
+      it('supports transactions', function(done) {
+        Support.prepareTransactionTest(this.sequelize, function(sequelize) {
+          var User = sequelize.define('User', { username: Sequelize.STRING })
 
-        User.sync({ force: true }).success(function() {
-          sequelize.transaction().then(function(t) {
-            User.create({ username: 'foo' }, { transaction: t }).success(function() {
+          User.sync({ force: true }).success(function() {
+            sequelize.transaction().then(function(t) {
+              User.create({ username: 'foo' }, { transaction: t }).success(function() {
 
-              User.findAndCountAll().success(function(info1) {
-                User.findAndCountAll({ transaction: t }).success(function(info2) {
-                  expect(info1.count).to.equal(0)
-                  expect(info2.count).to.equal(1)
-                  t.rollback().success(function(){ done() })
+                User.findAndCountAll().success(function(info1) {
+                  User.findAndCountAll({ transaction: t }).success(function(info2) {
+                    expect(info1.count).to.equal(0)
+                    expect(info2.count).to.equal(1)
+                    t.rollback().success(function(){ done() })
+                  })
                 })
               })
             })
           })
         })
       })
-    })
+    }
 
     it("handles where clause [only]", function(done) {
       this.User.findAndCountAll({where: "id != " + this.users[0].id}).success(function(info) {
@@ -1453,25 +1459,27 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
           Citizen.create({ name: 'Bob' }).done(function (err, bob) {
             expect(err).not.be.ok
             Election.create({ name: 'Some election' }).done(function (err, election) {
-              expect(err).not.be.ok
-              election.setCitizen(alice).done(function (err) {
+              Election.create({ name: 'Some other election' }).done(function (err, election) {
                 expect(err).not.be.ok
-                election.setVoters([alice, bob]).done(function (err) {
+                election.setCitizen(alice).done(function (err) {
                   expect(err).not.be.ok
-
-                  var criteria = {
-                    offset: 5,
-                    limit: 1,
-                    include: [
-                      Citizen, // Election creator
-                      { model: Citizen, as: 'Voters' } // Election voters
-                    ]
-                  }
-                  Election.findAndCountAll(criteria).done(function (err, elections) {
+                  election.setVoters([alice, bob]).done(function (err) {
                     expect(err).not.be.ok
-                    expect(elections.count).to.equal(2)
-                    expect(elections.rows.length).to.equal(0)
-                    done()
+
+                    var criteria = {
+                      offset: 5,
+                      limit: 1,
+                      include: [
+                        Citizen, // Election creator
+                        { model: Citizen, as: 'Voters' } // Election voters
+                      ]
+                    }
+                    Election.findAndCountAll(criteria).done(function (err, elections) {
+                      expect(err).not.be.ok
+                      expect(elections.count).to.equal(2)
+                      expect(elections.rows.length).to.equal(0)
+                      done()
+                    })
                   })
                 })
               })
@@ -1503,25 +1511,27 @@ describe(Support.getTestDialectTeaser("DAOFactory"), function () {
       })
     })
 
-    it('supports transactions', function(done) {
-      Support.prepareTransactionTest(this.sequelize, function(sequelize) {
-        var User = sequelize.define('User', { username: Sequelize.STRING })
+    if (current.dialect.supports.transactions) {
+      it('supports transactions', function(done) {
+        Support.prepareTransactionTest(this.sequelize, function(sequelize) {
+          var User = sequelize.define('User', { username: Sequelize.STRING })
 
-        User.sync({ force: true }).success(function() {
-          sequelize.transaction().then(function(t) {
-            User.create({ username: 'foo' }, { transaction: t }).success(function() {
-              User.all().success(function(users1) {
-                User.all({ transaction: t }).success(function(users2) {
-                  expect(users1.length).to.equal(0)
-                  expect(users2.length).to.equal(1)
-                  t.rollback().success(function(){ done() })
+          User.sync({ force: true }).success(function() {
+            sequelize.transaction().then(function(t) {
+              User.create({ username: 'foo' }, { transaction: t }).success(function() {
+                User.all().success(function(users1) {
+                  User.all({ transaction: t }).success(function(users2) {
+                    expect(users1.length).to.equal(0)
+                    expect(users2.length).to.equal(1)
+                    t.rollback().success(function(){ done() })
+                  })
                 })
               })
             })
           })
         })
       })
-    })
+    }
 
     it("should return all users", function(done) {
       this.User.all().on('success', function(users) {

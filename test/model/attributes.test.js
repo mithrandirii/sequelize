@@ -134,6 +134,31 @@ describe(Support.getTestDialectTeaser("Model"), function () {
         ]);
       });
 
+      describe('primaryKey', function () {
+        describe('in combination with allowNull', function () {
+          beforeEach(function () {
+            this.ModelUnderTest = this.sequelize.define('ModelUnderTest', {
+              identifier: {
+                primaryKey: true,
+                type:       Sequelize.STRING,
+                allowNull: false
+              }
+            });
+
+            return this.ModelUnderTest.sync({ force: true });
+          });
+
+          it('sets the column to not allow null', function () {
+            return this
+              .ModelUnderTest
+              .describe()
+              .then(function (fields) {
+                expect(fields.identifier).to.include({ allowNull: false });
+              });
+          });
+        });
+      });
+
       describe('field and attribute name is the same', function () {
         beforeEach(function () {
           return this.Comment.bulkCreate([
@@ -194,6 +219,36 @@ describe(Support.getTestDialectTeaser("Model"), function () {
           });
         }).then(function (user) {
           expect(user.get('name')).to.equal('Barfoo');
+        });
+      });
+
+      it('should not contain the field properties after create', function () {
+        var Model = this.sequelize.define('test', {
+          id: {
+            type         : Sequelize.INTEGER,
+            field        : 'test_id',
+            autoIncrement: true,
+            primaryKey   : true,
+            validate     : {
+              min: 1
+            }
+          },
+          title: {
+            allowNull: false,
+            type     : Sequelize.STRING(255),
+            field    : 'test_title',
+          }
+        }, {
+          timestamps: true,
+          underscored: true,
+          freezeTableName: true
+        });
+
+        return Model.sync({force: true}).then(function () {
+          return Model.create({title: 'test'}).then(function (data) {
+            expect(data.get('test_title')).to.be.an('undefined');
+            expect(data.get('test_id')).to.be.an('undefined');
+          });
         });
       });
 
