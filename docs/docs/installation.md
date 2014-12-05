@@ -1,27 +1,27 @@
-## Installation
+Sequelize is available via NPM.
 
-You have two options to install Sequelize:
-
-1&period; Install it via NPM:
-
-```bash    
-# Use npm on the commandline:
-$ npm install sequelize
-
-// Then require the installed library in your application code:
-var Sequelize = require("sequelize")
-```
-
-2&period; Download the code from the git repository and require it's entry file index&period;js&colon;
-    
 ```bash
-# Checkout the current code from the repository using the commandline
-$ cd path/to/lib
-$ git clone git://github.com/sequelize/sequelize.git
+$ npm install --save sequelize
 
-// Then require the installed library in your application code&colon;
-
-var Sequelize = require(__dirname + "/lib/sequelize/index")
+# And one of the following:
+$ npm install --save pg
+$ npm install --save mysql
+$ npm install --save mariasql
+$ npm install --save sqlite3
 ```
 
-This will make the class `Sequelize` available.
+## Setting up a connection
+
+Sequelize will setup a connection pool on initialization so you should ideally only ever create on instance per application.
+
+```js
+var sequelize = new Sequelize('database', 'username', 'password', {
+  host: 'localhost',
+  dialect: 'mysql'|'mariadb'|'sqlite'|'postgres'
+});
+
+// Or you can simply use a connection uri
+var sequelize = new Sequelize('postgress://user:pass@example.com:5432/dbname');
+```
+
+The Sequelize constructor takes a whole slew of options that are available via the [API reference](http://sequelize.readthedocs.org/en/latest/api/sequelize/).
