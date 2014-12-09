@@ -9,9 +9,9 @@ chai.config.includeStack = true
 
 describe(Support.getTestDialectTeaser("QueryInterface"), function () {
   beforeEach(function(done) {
-    this.sequelize.options.quoteIdenifiers = true
-    this.queryInterface = this.sequelize.getQueryInterface()
-    done()
+    this.sequelize.options.quoteIdenifiers = true;
+    this.queryInterface = this.sequelize.getQueryInterface();
+    done();
   })
 
   describe('dropAllTables', function() {
@@ -149,6 +149,20 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
   })
 
   describe('createTable', function () {
+    it('should create a auto increment primary key', function () {
+      return this.queryInterface.createTable('TableWithPK', {
+        table_id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true
+        }
+      }).bind(this).then(function () {
+        return this.queryInterface.insert(null, 'TableWithPK', {}, {raw: true, returning: true}).then(function (response) {
+          expect(response.table_id || (typeof response !== "object" && response)).to.be.ok;
+        });
+      });
+    });
+
     it('should work with enums (1)', function () {
       return this.queryInterface.createTable('SomeTable', {
         someEnum: DataTypes.ENUM('value1', 'value2', 'value3')
@@ -195,6 +209,28 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
         return self.queryInterface.renameColumn('_Users', 'username', 'pseudo')
       })
     })
+
+    it('works with schemas', function () {
+      var self = this
+      var Users = self.sequelize.define('User', {
+        username: DataTypes.STRING
+      }, { 
+        tableName: 'Users',
+        schema: 'archive'
+      })
+
+      return self.sequelize.dropAllSchemas().then(function () {
+        return self.sequelize.createSchema("archive");
+      }).then(function () {
+        return Users.sync({ force: true }).then(function() {
+          return self.queryInterface.renameColumn({
+            schema: 'archive',
+            tableName: 'Users'
+          }, 'username', 'pseudo');
+        });
+      });
+    });
+
     it('rename a column non-null without default value', function() {
       var self = this
       var Users = self.sequelize.define('_Users', {
@@ -222,7 +258,7 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
         return self.queryInterface.renameColumn('_Users', 'active', 'enabled')
       })
     })
-    it('renames a column primary key autoincrement column', function() {
+    it('renames a column primary key autoIncrement column', function() {
       var self = this
       var Fruits = self.sequelize.define('Fruit', {
         fruitId: {
@@ -239,13 +275,40 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
     })
   });
 
+  describe('changeColumn', function () {
+    it('should support schemas', function () {
+      return this.sequelize.dropAllSchemas().bind(this).then(function () {
+        return this.sequelize.createSchema("archive");
+      }).then(function () {
+        return this.queryInterface.createTable({
+          tableName: 'users',
+          schema: 'archive'
+        }, {
+          id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+          },
+          currency: DataTypes.INTEGER
+        }).bind(this).then(function () {
+          return this.queryInterface.changeColumn({
+            tableName: 'users',
+            schema: 'archive'
+          }, 'currency', {
+            type: DataTypes.FLOAT
+          });
+        });
+      });
+    });
+  });
+
   describe('addColumn', function () {
     beforeEach(function () {
       return this.queryInterface.createTable('users', {
         id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
-          autoincrement: true
+          autoIncrement: true
         }
       });
     });
@@ -255,7 +318,7 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
         id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
-          autoincrement: true
+          autoIncrement: true
         }
       }).bind(this).then(function () {
         return this.queryInterface.addColumn('users', 'level_id', {
@@ -264,6 +327,26 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
           referenceKey: 'id',
           onUpdate: 'cascade',
           onDelete: 'set null'
+        });
+      });
+    });
+
+    it('should work with schemas', function () {
+      return this.queryInterface.createTable({
+        tableName: 'users',
+        schema: 'archive'
+      }, {
+        id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true
+        }
+      }).bind(this).then(function () {
+        return this.queryInterface.addColumn({
+          tableName: 'users',
+          schema: 'archive'
+        }, 'level_id', {
+          type: DataTypes.INTEGER
         });
       });
     });
@@ -286,14 +369,14 @@ describe(Support.getTestDialectTeaser("QueryInterface"), function () {
         id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
-          autoincrement: true
+          autoIncrement: true
         },
       }).bind(this).then(function () {
         return this.queryInterface.createTable('hosts', {
           id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
-            autoincrement: true
+            autoIncrement: true
           },
           admin: {
             type: DataTypes.INTEGER,

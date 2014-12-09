@@ -116,11 +116,11 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
                 expect(err.message).to.match(/Access denied for user/)
               } else if (dialect === 'postgres') {
                 expect(
-                  err.message.match(/Failed to authenticate for PostgresSQL/) ||
+                  err.message.match(/connect ECONNREFUSED/) ||
                   err.message.match(/invalid port number/)
                 ).to.be.ok
               } else {
-                expect(err.message).to.match(/Failed to authenticate/)
+                expect(err.message).to.match(/connect ECONNREFUSED/)
               }
 
               done()
@@ -227,7 +227,6 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
       this.sequelize.query(this.insertQuery, null, { raw: true })
       .complete(function(err, result) {
         expect(err).to.be.null
-        expect(result).to.be.null
         done()
       })
     })
@@ -236,7 +235,6 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
       this.sequelize.query(this.insertQuery)
       .complete(function(err, result) {
         expect(err).to.be.null
-        expect(result).to.not.exist
         done()
       })
     })
@@ -1120,4 +1118,13 @@ describe(Support.getTestDialectTeaser("Sequelize"), function () {
       })
     }
   })
-})
+
+  describe('databaseVersion', function () {
+    it('should database/dialect version', function () {
+      return this.sequelize.databaseVersion().then(function (version) {
+        expect(typeof version).to.equal('string');
+        expect(version).to.be.ok;
+      });
+    });
+  });
+});
