@@ -1,9 +1,12 @@
-# Next
+# 2.0.0-rc4
 - [INTERNALS] Update `inflection` dependency to v1.5.3
 - [FEATURE] Replaced string error messages for connection errors with error objects. [#2576](https://github.com/sequelize/sequelize/pull/2576)
 - [FEATURE] Support for updating fields on duplicate key in bulk update (mysql only) [#2692](https://github.com/sequelize/sequelize/pull/2692)
 - [FEATURE] Basic support for Microsoft SQL Server
 - [INTERNALS] Deprecate migration logic. This is now implemented in [umzug](https://github.com/sequelize/umzug) and the [CLI](https://github.com/sequelize/cli).
+- [BUG] Fixed various inconsistencies with `Instance.update` and how it behaves together with `create`, `fields` and more.
+- [BUG] Fixed crash/bug when using `include.where` together with `association.scope`
+- [BUG] Fixed support for `Instance.destroy()` and `field` for postgres.
 
 #### Backwards compatability changes
 - Some of the string error messages for connection errors have been replaced with actual error instances. Checking for connection errors should now be more consistent.
