@@ -129,23 +129,56 @@ describe(Support.getTestDialectTeaser('Sequelize Errors'), function () {
   });
 
   describe('Constraint error', function () {
-    it('Can be intercepted using .catch', function () {
+    [
+      {
+        type: 'UniqueConstraintError',
+        exception: Sequelize.UniqueConstraintError
+      },
+      {
+        type: 'ValidationError',
+        exception: Sequelize.ValidationError
+      }
+    ].forEach(function(constraintTest) {
+
+      it('Can be intercepted as ' + constraintTest.type + ' using .catch', function () {
+        var spy = sinon.spy()
+          , User = this.sequelize.define('user', {
+            first_name: {
+              type: Sequelize.STRING,
+              unique: 'unique_name'
+            },
+            last_name: {
+              type: Sequelize.STRING,
+              unique: 'unique_name'
+            }
+          });
+
+        var record = { first_name: 'jan', last_name: 'meier' };
+        return this.sequelize.sync({ force: true }).bind(this).then(function () {
+          return User.create(record);
+        }).then(function () {
+          return User.create(record).catch(constraintTest.exception, spy);
+        }).then(function () {
+          expect(spy).to.have.been.calledOnce;
+        });
+      });
+
+    });
+
+    it('Supports newlines in keys', function () {
       var spy = sinon.spy()
         , User = this.sequelize.define('user', {
-          first_name: {
-            type: Sequelize.STRING,
-            unique: 'unique_name'
-          },
-          last_name: {
-            type: Sequelize.STRING,
-            unique: 'unique_name'
-          }
-        });
+            name: {
+              type: Sequelize.STRING,
+              unique: 'unique \n unique',
+            }
+          });
 
       return this.sequelize.sync({ force: true }).bind(this).then(function () {
-        return User.create({ first_name: 'jan', last_name: 'meier' });
+        return User.create({ name: 'jan' });
       }).then(function () {
-        return User.create({ first_name: 'jan', last_name: 'meier' }).catch(this.sequelize.UniqueConstraintError, spy);
+        // If the error was successfully parsed, we can catch it!
+        return User.create({ name: 'jan' }).catch(this.sequelize.UniqueConstraintError, spy);
       }).then(function () {
         expect(spy).to.have.been.calledOnce;
       });
