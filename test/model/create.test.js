@@ -294,6 +294,38 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       });
     });
 
+    it('should be able to set createdAt and updatedAt if using silent: true', function () {
+      var User = this.sequelize.define('user', {
+        name: DataTypes.STRING
+      }, {
+        timestamps: true
+      });
+
+      var createdAt = new Date(2012, 10, 10, 10, 10, 10);
+      var updatedAt = new Date(2011, 11, 11, 11, 11, 11);
+
+      return User.sync({force: true}).then(function () {
+        return User.create({
+          createdAt: createdAt,
+          updatedAt: updatedAt
+        }, {
+          silent: true
+        }).then(function (user) {
+          expect(createdAt.getTime()).to.equal(user.get('createdAt').getTime());
+          expect(updatedAt.getTime()).to.equal(user.get('updatedAt').getTime());
+
+          return User.findOne({
+            updatedAt: {
+              ne: null
+            }
+          }).then(function (user) {
+            expect(createdAt.getTime()).to.equal(user.get('createdAt').getTime());
+            expect(updatedAt.getTime()).to.equal(user.get('updatedAt').getTime());
+          });
+        });
+      });
+    });
+
     if (current.dialect.supports.transactions) {
       it('supports transactions', function(done) {
         var self = this;
@@ -306,6 +338,53 @@ describe(Support.getTestDialectTeaser('Model'), function() {
                   expect(count).to.equal(1);
                   done();
                 });
+              });
+            });
+          });
+        });
+      });
+    }
+
+    if (current.dialect.supports['RETURNING']) {
+      describe('Autoincrement values', function () {
+        it('should make the autoincremented values available on the returned instances', function () {
+          var User = this.sequelize.define('user', {});
+
+          return User.sync({force: true}).then(function () {
+            return User.bulkCreate([
+              {},
+              {},
+              {}
+            ], {returning: true}).then(function (users) {
+              expect(users.length).to.be.ok;
+              users.forEach(function (user, i) {
+                expect(user.get('id')).to.be.ok;
+                expect(user.get('id')).to.equal(i+1);
+              });
+            });
+          });
+        });
+
+        it('should make the autoincremented values available on the returned instances', function () {
+          var User = this.sequelize.define('user', {
+            maId: {
+              type: DataTypes.INTEGER,
+              primaryKey: true,
+              autoIncrement: true,
+              field: 'yo_id'
+            }
+          });
+
+          return User.sync({force: true}).then(function () {
+            return User.bulkCreate([
+              {},
+              {},
+              {}
+            ], {returning: true}).then(function (users) {
+              expect(users.length).to.be.ok;
+              users.forEach(function (user, i) {
+                expect(user.get('maId')).to.be.ok;
+                expect(user.get('maId')).to.equal(i+1);
               });
             });
           });
@@ -987,6 +1066,40 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         });
       });
     }
+
+    it('should be able to set createdAt and updatedAt if using silent: true', function () {
+      var User = this.sequelize.define('user', {
+        name: DataTypes.STRING
+      }, {
+        timestamps: true
+      });
+
+      var createdAt = new Date(2012, 10, 10, 10, 10, 10);
+      var updatedAt = new Date(2011, 11, 11, 11, 11, 11);
+      var values = _.map(new Array(10), function () {
+        return {
+          createdAt: createdAt,
+          updatedAt: updatedAt
+        };
+      });
+
+      return User.sync({force: true}).then(function () {
+        return User.bulkCreate(values, {
+          silent: true
+        }).then(function () {
+          return User.findAll({
+            updatedAt: {
+              ne: null
+            }
+          }).then(function (users) {
+            users.forEach(function (user) {
+              expect(createdAt.getTime()).to.equal(user.get('createdAt').getTime());
+              expect(updatedAt.getTime()).to.equal(user.get('updatedAt').getTime());
+            });
+          });
+        });
+      });
+    });
 
     it('properly handles disparate field lists', function(done) {
       var self = this
