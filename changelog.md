@@ -1,16 +1,17 @@
 # Next
+- [FEATURE] Throw an error if no where clause is given to `Model.destroy()`.
 - [BUG] Fixed issue with `order: sequelize.literal('string')`
 - [FEATURE] add `clone: true` support to `.get()`. Is needed when using `delete` on values from a `.get()` (`toJSON()`, `this.values`). (.get() is just a reference to the values for performance reasons when there's no custom getters or includes)
 - [FEATURE] add `sequelize.escape(value)` convenience method
 - [BUG] Fixes crash with `findAll({include: [Model], order: sequelize.literal()})`
 - [FEATURE] Now possible to pass `createdAt` and `updatedAt` values to `Model.create`/`Model.bulkCreate` when using silent: true (when importing datasets with existing timestamps)
-- [FEATURE] `instance.update()` using default fields will now automatically also save values provided via `beforeUpdate` hooks
+- [FEATURE] `instance.update()` using default fields will now automatically also save and validate values provided via `beforeUpdate` hooks
 - [BUG] Fixed bad SQL when updating a JSON attribute with a different `field`
 - [BUG] Fixed issue with creating and updating values of a `DataTypes.ARRAY(DataTypes.JSON)` attribute
 - [BUG] `Model.bulkCreate([{}], {returning: true})` will now correctly result in instances with primary key values.
 
 #### Backwards compatability changes
-- `instance.update()` using default fields will now automatically also save values provided via `beforeUpdate` hooks
+- `instance.update()` using default fields will now automatically also save and validate values provided via `beforeUpdate` hooks
 
 
 # 2.0.0-rc6
