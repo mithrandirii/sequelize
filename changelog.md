@@ -1,4 +1,4 @@
-# Next
+# 2.0.0-rc7
 - [FEATURE] Throw an error if no where clause is given to `Model.destroy()`.
 - [BUG] Fixed issue with `order: sequelize.literal('string')`
 - [FEATURE] add `clone: true` support to `.get()`. Is needed when using `delete` on values from a `.get()` (`toJSON()`, `this.values`). (.get() is just a reference to the values for performance reasons when there's no custom getters or includes)
@@ -9,10 +9,12 @@
 - [BUG] Fixed bad SQL when updating a JSON attribute with a different `field`
 - [BUG] Fixed issue with creating and updating values of a `DataTypes.ARRAY(DataTypes.JSON)` attribute
 - [BUG] `Model.bulkCreate([{}], {returning: true})` will now correctly result in instances with primary key values.
+- [BUG] `instance.save()` with `fields: []` (as a result of `.changed()` being `[]`) will no result in a noop instead of an empty update query.
+- [BUG] Fixed case where `findOrCreate` could return `[null, true]` when given a `defaults` value that triggered a unique constraint error.
 
 #### Backwards compatability changes
 - `instance.update()` using default fields will now automatically also save and validate values provided via `beforeUpdate` hooks
-
+- Sequelize no longer supports case insensitive mysql enums
 
 # 2.0.0-rc6
 - [BUG] Fixed issue with including by association reference and where
