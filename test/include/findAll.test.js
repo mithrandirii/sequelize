@@ -1999,6 +1999,84 @@ describe(Support.getTestDialectTeaser('Include'), function() {
         });
       });
     });
+    
+    it('should work on a nested set of required 1:1 relations', function () {
+      var Person = this.sequelize.define("Person", {
+        name: { 
+          type          : Sequelize.STRING,
+          allowNull     : false
+        }
+      });
 
+      var UserPerson = this.sequelize.define("UserPerson", {
+        PersonId: { 
+          type          : Sequelize.INTEGER, 
+          primaryKey    : true
+        },
+
+        rank: {
+          type          : Sequelize.STRING
+        }
+      });
+
+      var User = this.sequelize.define("User", {
+        UserPersonId: { 
+          type          : Sequelize.INTEGER, 
+          primaryKey    : true
+        },
+
+        login: {
+          type          : Sequelize.STRING,
+          unique        : true,
+          allowNull     : false,
+        }
+      });
+
+      UserPerson.belongsTo(Person, { 
+        foreignKey: { 
+          allowNull: false
+        },
+        onDelete: 'CASCADE'
+      });
+      Person.hasOne(UserPerson, { 
+        foreignKey: { 
+          allowNull: false
+        },
+        onDelete: 'CASCADE'
+      });
+      
+      User.belongsTo(UserPerson, { 
+        foreignKey: {
+          name: 'UserPersonId',
+          allowNull: false
+        },
+        onDelete: 'CASCADE'
+      });
+      UserPerson.hasOne(User, {
+        foreignKey: { 
+          name: 'UserPersonId',
+          allowNull: false
+        },
+        onDelete: 'CASCADE'
+      });
+
+      return this.sequelize.sync({force: true}).then(function () {
+        return Person.findAll({
+          offset        : 0,
+          limit         : 20, 
+          attributes    : ['id', 'name'],
+          include       : [{
+            model         : UserPerson, 
+            required      : true, 
+            attributes    : ['rank'], 
+            include       : [{
+              model         : User,
+              required      : true,
+              attributes    : ['login']
+            }]
+          }]
+        });
+      });
+    });
   });
 });
