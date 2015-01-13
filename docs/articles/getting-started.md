@@ -1,6 +1,6 @@
 ## Introduction
 
-This article explains the basic concepts of Sequelize. You will learn how to use the supported dialects, which ways of database setup approaches are available and how common scenarios can be achieved.
+This article explains the basic concepts of Sequelize. You will learn how to use the supported dialects, which types of database setup approaches are available, and how common scenarios can be achieved.
 
 ## Premise
 
@@ -19,7 +19,7 @@ TODO - a link to bluebird + general promise syntax + catch / error handling
 ## Setting up a project
 
 Now that your computer is prepared and your coffee sits next to your keyboard,
-we can finally get started. First things first: Create a directory and initializeit with NPM!
+we can finally get started. First things first: create a directory and initialize it with NPM!
 
 ```bash 
 $ mkdir my-project
@@ -40,7 +40,7 @@ $ npm install --save mariasql # for mariasql
 
 ## Connecting to the database
 
-Open the created directory in your favorite text editor and add a new file called `app.js` with the following content.
+Open the created directory in your favorite text editor and add a new file called `app.js` with the following content:
 
 ```js
 var Sequelize = require('sequelize')
@@ -60,9 +60,9 @@ sequelize
 
 ## Managing the schema of your database
 
-Sequelize supports two way of schema management. You can either define so called migrations, which are programmatically changing your database's structure. Or you can let Sequelize create the tables for you.
+Sequelize supports two types of schema management. You can either define so-called migrations, which are programmatically changing your database's structure, or you can let Sequelize create the tables for you.
 
-While the first possibility of using `migrations` takes more time to setup, it's most likely the way to go, if you want to deploy your application on many different server environments. The reason for that is based on the fact, that migrations are consistently changing your database according to the current state of the schema.
+While the first possibility of using `migrations` takes more time to setup, it's most likely the way to go if you want to deploy your application on many different server environments. This is because migrations are consistently changing your database according to the current state of the schema.
 
 However, the automated way of using Sequelize's function `sequelize.sync` will probably be a good choice on your local machine or if you just want to quickly spin up a prototype.
 
@@ -70,7 +70,7 @@ As this article is for beginners, we will skip migrations for now and take a clo
 
 ### Defining a model
 
-In order to let Sequelize create a schemas in the database, you need to describe, what kind of data you want to store. This can be done with `sequelize.define`:
+In order to let Sequelize create schemas in the database, you need to describe what kind of data you want to store. This can be done with `sequelize.define`:
     
 ```js
 var User = sequelize.define('User', {
@@ -79,11 +79,11 @@ var User = sequelize.define('User', {
 });
 ```
 
-This will define a user model that has a username and password. Furthermore, Sequelize will automatically add the columns `id`, `createdAt` and `updatedAt`. `createdAt` and `updatedAt` are controlled by sequelize - when you `create` a model through sequelize `createdAt` will be set, and whenever you call `updateAttributes` / `save` on a model, `updatedAt` will be set. 
+This will define a user model that has a username and password. Furthermore, Sequelize will automatically add the columns `id`, `createdAt` and `updatedAt`. `createdAt` and `updatedAt` are controlled by Sequelize - when you `create` a model through Sequelize, `createdAt` will be set, and whenever you call `updateAttributes` / `save` on a model, `updatedAt` will be set. 
 
 ### Synchronizing the schema
 
-As we want to store data in the database, we need to create a representation of the model.
+As we want to store data in the database, we need to create a representation of the model:
 
 ```js    
 sequelize
@@ -107,7 +107,7 @@ Please note, that `{ force: true }` will drop the `Users` table and re-create it
 
 ### Configuration
 
-You might not need the timestamps or you might not want the plural of the model's name as table name, right? Luckily there are configuration possibilities for that.
+You might not need the timestamps or you might not want the plural of the model's name as table name, right? Luckily there are configuration possibilities for that:
     
 ```js
 var User = sequelize.define('User', {
@@ -352,7 +352,7 @@ return sequelize.Promise.all([
 
 ## A combined example
 
-Now that you know the basics of Sequelize, you might want to see everything in a single program.
+Now that you know the basics of Sequelize, you might want to see everything in a single program:
     
 ```js
 var Sequelize = require('sequelize')
