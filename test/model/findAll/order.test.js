@@ -73,7 +73,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       describe('injections', function () {
         beforeEach(function () {
           this.User = this.sequelize.define('user', {
-
+            name: DataTypes.STRING
           });
           this.Group = this.sequelize.define('group', {
 
@@ -97,6 +97,26 @@ describe(Support.getTestDialectTeaser('Model'), function() {
               [this.Group, 'id', ';DELETE YOLO INJECTIONS']
             ]
           })).to.eventually.be.rejectedWith(Error, 'Order must be \'ASC\' or \'DESC\', \';DELETE YOLO INJECTIONS\' given');
+        });
+
+        if (current.dialect.supports['ORDER NULLS']) {
+          it('should not throw with on NULLS LAST/NULLS FIRST', function () {
+            return this.User.findAll({
+              include: [this.Group],
+              order: [
+                ['id', 'ASC NULLS LAST'],
+                [this.Group, 'id', 'DESC NULLS FIRST']
+              ]
+            });
+          });
+        }
+
+        it('should not throw on a literal', function () {
+          return this.User.findAll({
+            order: [
+              ['id', this.sequelize.literal('ASC, name DESC')]
+            ]
+          });
         });
 
         it('should not throw with include when last order argument is a field', function () {

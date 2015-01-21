@@ -1,9 +1,10 @@
-# Next
+# 2.0.0-rc8
 - [FEATURE] CLS Support. CLS is also used to automatically pass the transaction to any calls within the callback chain when using `sequelize.transaction(function() ...`.
 - [BUG] Fixed issue with paranoid deletes and `deletedAt` with a custom field.
 - [BUG] No longer crahes on `where: []`
 - [FEATURE] Validations are now enabled by default for upsert.
 - [FEATURE] Preliminary support for `include.through.where`
+- [SECURITY/BUG] Fixed injection issue in direction param for order
 
 # 2.0.0-rc7
 - [FEATURE] Throw an error if no where clause is given to `Model.destroy()`.
