@@ -1,6 +1,7 @@
 ## Definition
 
-To define mappings between a model and a table&comma; use the `define` method&period; Sequelize will then automatically add the attributes `createdAt` and `updatedAt` to it&period; So you will be able to know when the database entry went into the db and when it was updated the last time&period; If you do not want timestamps on your models, only want some timestamps, or you are working with an existing database where the columns are named something else, jump straight on to [configuration ][0]to see how to do that.
+To define mappings between a model and a table, use the `define` method. Sequelize will then automatically add the attributes `createdAt` and `updatedAt` to it. So you will be able to know when the database entry went into the db and when it was updated the last time. If you do not want timestamps on your models, only want some timestamps, or you are working with an existing database where the columns are named something else, jump straight on to [configuration ][0]to see how to do that.
+    
 
 ```js
 var Project = sequelize.define('Project', {
@@ -15,8 +16,8 @@ var Task = sequelize.define('Task', {
 })
 ```
 
-You can also set some options on each column&colon;
-
+You can also set some options on each column:
+    
 ```js
 var Foo = sequelize.define('Foo', {
  // instantiating will automatically set the flag to true if not set
@@ -51,11 +52,11 @@ var Foo = sequelize.define('Foo', {
 })
 ```
 
-The comment option can also be used on a table&comma; see [model configuration][0]
+The comment option can also be used on a table, see [model configuration][0]
 
 ## Data types
 
-Sequelize currently supports the following datatypes&colon;
+Sequelize currently supports the following datatypes:
 
 ```js
 Sequelize.STRING                      // VARCHAR(255)
@@ -84,9 +85,9 @@ Sequelize.BLOB('tiny')                // TINYBLOB (bytea for PostgreSQL. Other o
 Sequelize.UUID                        // UUID datatype for PostgreSQL and SQLite, CHAR(36) BINARY for MySQL (use defaultValue: Sequelize.UUIDV1 or Sequelize.UUIDV4 to make sequelize generate the ids automatically)
 ```
 
-The BLOB data type allows you to insert data both as strings and as buffers&period; When you do a find or findAll on a model which has a BLOB column&comma; that data will always be returned as a buffer&period;
-
-If you are working with the PostgreSQL TIMESTAMP WITHOUT TIME ZONE and you need to parse it to a different timezone&comma; please use the pg library's own parser&colon;
+The BLOB data type allows you to insert data both as strings and as buffers. When you do a find or findAll on a model which has a BLOB column. that data will always be returned as a buffer.
+ 
+If you are working with the PostgreSQL TIMESTAMP WITHOUT TIME ZONE and you need to parse it to a different timezone, please use the pg library's own parser:
 
 ```js
 require('pg').types.setTypeParser(1114, function(stringValue) {
@@ -95,7 +96,7 @@ require('pg').types.setTypeParser(1114, function(stringValue) {
 });
 ```
 
-In addition to the type mentioned above&comma; integer&comma; bigint and float also support unsigned and zerofill properties&comma; which can be combined in any order&colon;
+In addition to the type mentioned above, integer, bigint and float also support unsigned and zerofill properties, which can be combined in any order:
 
 ```js
 Sequelize.INTEGER.UNSIGNED              // INTEGER UNSIGNED
@@ -107,8 +108,8 @@ Sequelize.INTEGER(11).UNSIGNED.ZEROFILL // INTEGER(11) UNSIGNED ZEROFILL
 
 _The examples above only show integer&comma; but the same can be done with bigint and float_
 
-Usage in object notation&colon;
-
+Usage in object notation:
+    
 ```js
 // for enums:
 sequelize.define('model', {
@@ -128,7 +129,7 @@ Getters and Setters can be defined in 2 ways &lpar;you can mix and match these 2
 * as part of a single property definition
 * as part of a model options
 
-**N&period;B&period;&colon;**If a getter or setter is defined in both places then the function found in the relevant property definition will always take precedence&period;
+**N.B.:**If a getter or setter is defined in both places then the function found in the relevant property definition will always take precedence&period;
 
 ### Defining as part of a property
 
