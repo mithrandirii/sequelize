@@ -1,3 +1,7 @@
+# 2.0.1
+- [BUG] Fixed issue with empty `include.where`
+- [BUG] Fixed issue with otherKey generation for self-association N:M
+
 # 2.0.0
 - [BUG] Fixed `field` support for `increment` and `decrement`.
 - [FEATURE/BUG] Raw queries always return all results (including affected rows etc). This means you should change all promise listeners on `sequelize.query` to use `.spread` instead of `.then`, unless you are passing a query type.
