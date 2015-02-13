@@ -170,9 +170,26 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
           default: '([equipment] IN (1, 3) OR [muscles] IN (2, 4))'
         });
 
+        testsql('$or', [
+          {
+            roleName: 'NEW'
+          }, {
+            roleName: 'CLIENT',
+            type: 'CLIENT'
+          }
+        ], {
+          default: "([roleName] = 'NEW' OR ([roleName] = 'CLIENT' AND [type] = 'CLIENT'))"
+        });
+
         test("sequelize.or({group_id: 1}, {user_id: 2})", function () {
           expectsql(sql.whereItemQuery(undefined, this.sequelize.or({group_id: 1}, {user_id: 2})), {
             default: "([group_id] = 1 OR [user_id] = 2)"
+          });
+        });
+
+        test("sequelize.or({group_id: 1}, {user_id: 2, role: 'admin'})", function () {
+          expectsql(sql.whereItemQuery(undefined, this.sequelize.or({group_id: 1}, {user_id: 2, role: 'admin'})), {
+            default: "([group_id] = 1 OR ([user_id] = 2 AND [role] = 'admin'))"
           });
         });
       });
