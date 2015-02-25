@@ -221,6 +221,54 @@ describe(Support.getTestDialectTeaser('BelongsToMany'), function() {
         expect(project.ProjectUsers.status).to.equal('active');
       });
     });
+
+    it('supports custom primary keys and foreign keys', function () {
+      var User = this.sequelize.define('User', {
+        'id_user': {
+          type: DataTypes.UUID,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          allowNull: false
+        }
+      }, {
+        tableName: 'tbl_user'
+      });
+
+      var Group = this.sequelize.define('Group', {
+        'id_group': {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4
+        }
+      }, {
+        tableName: 'tbl_group'
+      });
+
+      var User_has_Group = this.sequelize.define('User_has_Group', {
+      
+      }, {
+        tableName: 'tbl_user_has_group'
+      });
+
+      User.belongsToMany(Group, {as: 'groups', through: User_has_Group, foreignKey: 'id_user'});
+      Group.belongsToMany(User, {as: 'users', through: User_has_Group, foreignKey: 'id_group'});
+
+      return this.sequelize.sync({force: true}).then(function () {
+        return Promise.join(
+          User.create(),
+          Group.create()
+        ).spread(function (user, group) {
+          return user.addGroup(group);
+        }).then(function () {
+          return User.findOne({
+            where: {}
+          }).then(function (user) {
+            return user.getGroups();
+          });
+        });
+      });
+    });
   });
 
   describe('setAssociations', function() {
