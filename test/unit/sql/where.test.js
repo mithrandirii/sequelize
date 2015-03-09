@@ -121,27 +121,21 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
       testsql('deleted', {
         $not: true
       }, {
-        default: "[deleted] NOT true",
-        mssql: "[deleted] NOT 'true'",
-        sqlite: "`deleted` NOT 1"
+        default: "[deleted] IS NOT true",
+        mssql: "[deleted] IS NOT 'true'",
+        sqlite: "`deleted` IS NOT 1"
       });
 
       testsql('deleted', {
         $not: null
       }, {
-        default: "[deleted] NOT NULL"
+        default: "[deleted] IS NOT NULL"
       });
 
       testsql('muscles', {
-        $not: [2, 4]
+        $not: 3
       }, {
-        default: '[muscles] NOT IN (2, 4)'
-      });
-
-      testsql('muscles', {
-        $notIn: [2, 4]
-      }, {
-        default: '[muscles] NOT IN (2, 4)'
+        default: '[muscles] != 3'
       });
     });
 
@@ -150,6 +144,20 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
         $notIn: []
       }, {
         default: '[equipment] NOT IN (NULL)'
+      });
+
+      testsql('equipment', {
+        $notIn: [4, 19]
+      }, {
+        default: '[equipment] NOT IN (4, 19)'
+      });
+    });
+
+    suite('$ne', function () {
+      testsql('email', {
+        $ne: 'jack.bauer@gmail.com'
+      }, {
+        default: "[email] != 'jack.bauer@gmail.com'"
       });
     });
 
@@ -306,6 +314,18 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
           });
 
           testsql('muscles', {
+            $contains: [2, 5]
+          }, {
+            field: {
+              type: DataTypes.ARRAY(DataTypes.INTEGER)
+            }
+          }, {
+            postgres: '"muscles" @> ARRAY[2,5]::INTEGER[]'
+          });
+        });
+
+        suite('$overlap', function () {
+          testsql('muscles', {
             $overlap: [3, 11]
           }, {
             postgres: '"muscles" && ARRAY[3,11]'
@@ -318,13 +338,9 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
           });
 
           testsql('muscles', {
-            $contains: [2, 5]
+            "&&": [9, 182]
           }, {
-            field: {
-              type: DataTypes.ARRAY(DataTypes.INTEGER)
-            }
-          }, {
-            postgres: '"muscles" @> ARRAY[2,5]::INTEGER[]'
+            postgres: '"muscles" && ARRAY[9,182]'
           });
         });
 
@@ -364,6 +380,46 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
               }
             }, {
               postgres: '"userId" = ANY (VALUES (2), (5))'
+            });
+          });
+        });
+
+        suite('$all', function() {
+          testsql('userId', {
+            $all: [4, 5, 6]
+          }, {
+            postgres: '"userId" = ALL (ARRAY[4,5,6])'
+          });
+
+          testsql('userId', {
+            $all: [2, 5]
+          }, {
+            field: {
+              type: DataTypes.ARRAY(DataTypes.INTEGER)
+            }
+          }, {
+            postgres: '"userId" = ALL (ARRAY[2,5]::INTEGER[])'
+          });
+
+          suite('$values', function () {
+            testsql('userId', {
+              $all: {
+                $values: [4, 5, 6]
+              }
+            }, {
+              postgres: '"userId" = ALL (VALUES (4), (5), (6))'
+            });
+
+            testsql('userId', {
+              $all: {
+                $values: [2, 5]
+              }
+            }, {
+              field: {
+                type: DataTypes.ARRAY(DataTypes.INTEGER)
+              }
+            }, {
+              postgres: '"userId" = ALL (VALUES (2), (5))'
             });
           });
         });

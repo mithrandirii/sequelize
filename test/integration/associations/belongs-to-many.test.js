@@ -246,7 +246,7 @@ describe(Support.getTestDialectTeaser('BelongsToMany'), function() {
       });
 
       var User_has_Group = this.sequelize.define('User_has_Group', {
-      
+
       }, {
         tableName: 'tbl_user_has_group'
       });
@@ -266,6 +266,147 @@ describe(Support.getTestDialectTeaser('BelongsToMany'), function() {
           }).then(function (user) {
             return user.getGroups();
           });
+        });
+      });
+    });
+
+    it('supports primary key attributes with different field names', function () {
+      var User = this.sequelize.define('User', {
+        id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          field: 'user_id'
+        }
+      }, {
+        tableName: 'tbl_user'
+      });
+
+      var Group = this.sequelize.define('Group', {
+        id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          field: 'group_id'
+        }
+      }, {
+        tableName: 'tbl_group'
+      });
+
+      var User_has_Group = this.sequelize.define('User_has_Group', {
+
+      }, {
+        tableName: 'tbl_user_has_group'
+      });
+
+      User.belongsToMany(Group, {through: User_has_Group});
+      Group.belongsToMany(User, {through: User_has_Group});
+
+      return this.sequelize.sync({force: true}).then(function () {
+        return Promise.join(
+          User.create(),
+          Group.create()
+        ).spread(function (user, group) {
+          return user.addGroup(group);
+        }).then(function () {
+          return Promise.join(
+            User.findOne({
+              where: {},
+              include: [Group]
+            }),
+            User.findAll({
+              include: [Group]
+            })
+          );
+        });
+      });
+    });
+
+    it('supports primary key attributes with different field names where parent include is required', function () {
+      var User = this.sequelize.define('User', {
+        id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          field: 'user_id'
+        }
+      }, {
+        tableName: 'tbl_user'
+      });
+
+      var Company = this.sequelize.define('Company', {
+        id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          field: 'company_id'
+        }
+      }, {
+        tableName: 'tbl_company'
+      });
+
+      var Group = this.sequelize.define('Group', {
+        id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          primaryKey: true,
+          defaultValue: DataTypes.UUIDV4,
+          field: 'group_id'
+        }
+      }, {
+        tableName: 'tbl_group'
+      });
+
+      var Company_has_Group = this.sequelize.define('Company_has_Group', {
+
+      }, {
+        tableName: 'tbl_company_has_group'
+      });
+
+      User.belongsTo(Company);
+      Company.hasMany(User);
+      Company.belongsToMany(Group, {through: Company_has_Group});
+      Group.belongsToMany(Company, {through: Company_has_Group});
+
+      return this.sequelize.sync({force: true}).then(function () {
+        return Promise.join(
+          User.create(),
+          Group.create(),
+          Company.create()
+        ).spread(function (user, group, company) {
+          return Promise.join(
+            user.setCompany(company),
+            company.addGroup(group)
+          );
+        }).then(function () {
+          return Promise.join(
+            User.findOne({
+              where: {},
+              include: [
+                {model: Company, include: [Group]}
+              ]
+            }),
+            User.findAll({
+              include: [
+                {model: Company, include: [Group]}
+              ]
+            }),
+            User.findOne({
+              where: {},
+              include: [
+                {model: Company, required: true, include: [Group]}
+              ]
+            }),
+            User.findAll({
+              include: [
+                {model: Company, required: true, include: [Group]}
+              ]
+            })
+          );
         });
       });
     });
