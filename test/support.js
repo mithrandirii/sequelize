@@ -10,8 +10,6 @@ var fs = require('fs')
   , expect = chai.expect
   , chaiAsPromised = require('chai-as-promised');
 
-chai.use(chaiAsPromised);
-
 // Make sure errors get thrown when testing
 Sequelize.Promise.onPossiblyUnhandledRejection(function(e, promise) {
   throw e;

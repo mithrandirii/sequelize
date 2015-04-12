@@ -923,6 +923,23 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       });
     });
 
+    it('updates only values that match the allowed fields', function() {
+      var self = this
+        , data = [{ username: 'Peter', secretValue: '42' }];
+
+      return this.User.bulkCreate(data).then(function() {
+        return self.User.update({username: 'Bill', secretValue: '43'}, {where: {secretValue: '42'}, fields: ['username']}).then(function() {
+          return self.User.findAll({order: 'id'}).then(function(users) {
+            expect(users.length).to.equal(1);
+
+            var user = users[0];
+            expect(user.username).to.equal('Bill');
+            expect(user.secretValue).to.equal('42');
+          });
+        });
+      });
+    });
+
     it('updates with casting', function() {
       var self = this;
       return this.User.create({
@@ -2348,7 +2365,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
 
   if (dialect !== 'sqlite' && current.dialect.supports.transactions) {
     it('supports multiple async transactions', function() {
-      this.timeout(25000);
+      this.timeout(50000);
       var self = this;
       return Support.prepareTransactionTest(this.sequelize).bind({}).then(function(sequelize) {
         var User = sequelize.define('User', { username: Sequelize.STRING });
