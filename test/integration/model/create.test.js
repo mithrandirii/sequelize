@@ -1,5 +1,7 @@
 'use strict';
 
+/* jshint -W030 */
+/* jshint -W110 */
 var chai = require('chai')
   , sinon = require('sinon')
   , Sequelize = require('../../../index')
@@ -89,18 +91,38 @@ describe(Support.getTestDialectTeaser('Model'), function() {
           username: 'gottlieb'
         });
       }).then(function () {
-        return User.findOrCreate({
+        return expect(User.findOrCreate({
           where: {
             objectId: 'asdasdasd'
           },
           defaults: {
             username: 'gottlieb'
           }
-        }).then(function () {
-          throw new Error('I should have been rejected');
-        }).catch(function (err) {
-          expect(err instanceof Sequelize.UniqueConstraintError).to.be.ok;
-          expect(err.fields).to.be.ok;
+        })).to.eventually.be.rejectedWith(Sequelize.UniqueConstraintError);
+      });
+    });
+
+    it('should work with undefined uuid primary key in where', function () {
+      var User = this.sequelize.define('User', {
+        id: {
+          type: DataTypes.UUID,
+          primaryKey: true,
+          allowNull: false,
+          defaultValue: DataTypes.UUIDV4
+        },
+        name: {
+          type: DataTypes.STRING
+        }
+      });
+
+      return User.sync({force: true}).then(function () {
+        return User.findOrCreate({
+          where: {
+            id: undefined
+          },
+          defaults: {
+            name: Math.random().toString()
+          }
         });
       });
     });
@@ -176,7 +198,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         });
 
         return User.sync({force: true}).then(function () {
-          return Promise.map(_.range(50), function (i) {
+          return Promise.map(_.range(50), function () {
             return User.findOrCreate({
               where: {
                 email: 'unique.email.1@sequelizejs.com',
@@ -266,6 +288,28 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       });
     });
 
+    it('does not include exception catcher in response', function() {
+      var self = this
+        , data = {
+            username: 'Username',
+            data: 'ThisIsData'
+          };
+
+      return self.User.findOrCreate({
+        where: data,
+        defaults: {}
+      }).spread(function(user, created) {
+        expect(user.dataValues.sequelize_caught_exception).to.be.undefined;
+      }).then(function () {
+        return self.User.findOrCreate({
+          where: data,
+          defaults: {}
+        }).spread(function(user, created) {
+          expect(user.dataValues.sequelize_caught_exception).to.be.undefined;
+        });
+      });
+    });
+
     it('creates new instance with default value.', function() {
       var data = {
           username: 'Username'
@@ -309,7 +353,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
               .catch (Promise.TimeoutError, function(e) {
                   throw new Error(e);
               })
-              .catch (Sequelize.ValidationError, function(err) {
+              .catch (Sequelize.ValidationError, function() {
                   return test(times + 1);
               });
           };
@@ -516,6 +560,61 @@ describe(Support.getTestDialectTeaser('Model'), function() {
             expect(createdAt.getTime()).to.equal(user.get('createdAt').getTime());
             expect(updatedAt.getTime()).to.equal(user.get('updatedAt').getTime());
           });
+        });
+      });
+    });
+
+    it('works with custom timestamps with a default value', function() {
+      var User = this.sequelize.define('User', {
+        username: DataTypes.STRING,
+        date_of_birth: DataTypes.DATE,
+        email: DataTypes.STRING,
+        password: DataTypes.STRING,
+        created_time: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW
+        },
+        updated_time: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW
+        }
+      }, {
+        createdAt: 'created_time',
+        updatedAt: 'updated_time',
+        tableName: 'users',
+        underscored: true,
+        freezeTableName: true,
+        force: false
+      });
+
+      return this.sequelize.sync({force: true}).then(function() {
+        return User.create({}).then(function(user) {
+          expect(user).to.be.ok;
+          expect(user.created_time).to.be.ok;
+          expect(user.updated_time).to.be.ok;
+        });
+      });
+    });
+
+    it('works with custom timestamps and underscored', function() {
+      var User = this.sequelize.define('User', {
+
+      }, {
+        createdAt: 'createdAt',
+        updatedAt: 'updatedAt',
+        underscored: true
+      });
+
+      return this.sequelize.sync({force: true}).then(function() {
+        return User.create({}).then(function(user) {
+          expect(user).to.be.ok;
+          expect(user.createdAt).to.be.ok;
+          expect(user.updatedAt).to.be.ok;
+
+          expect(user.created_at).not.to.be.ok;
+          expect(user.updated_at).not.to.be.ok;
         });
       });
     });
@@ -1150,14 +1249,16 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         });
 
         it('through sequelize', function() {
-          var self = this
-            , Enum = this.sequelize.define('Enum', {
-                state: {
-                  type: Sequelize.ENUM,
-                  values: ['happy', 'sad'],
-                  allowNull: true
-                }
-              });
+          var self = this;
+          /* jshint ignore:start */
+          var Enum = this.sequelize.define('Enum', {
+            state: {
+              type: Sequelize.ENUM,
+              values: ['happy', 'sad'],
+              allowNull: true
+            }
+          });
+          /* jshint ignore:end */
 
           return this.sequelize.sync({ force: true }).then(function() {
             return self.sequelize.sync().then(function() {

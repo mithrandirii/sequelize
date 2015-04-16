@@ -1,7 +1,7 @@
 'use strict';
 
+/* jshint -W030 */
 var chai = require('chai')
-  , sinon = require('sinon')
   , Sequelize = require('../../../index')
   , Promise = Sequelize.Promise
   , expect = chai.expect
@@ -9,8 +9,6 @@ var chai = require('chai')
   , DataTypes = require(__dirname + '/../../../lib/data-types')
   , dialect = Support.getTestDialect()
   , datetime = require('chai-datetime')
-  , _ = require('lodash')
-  , assert = require('assert')
   , current = Support.sequelize;
 
 chai.use(datetime);
@@ -89,6 +87,26 @@ describe(Support.getTestDialectTeaser('Model'), function() {
           expect(user.createdAt).to.be.ok;
           expect(user.username).to.equal('doe');
           expect(user.updatedAt).to.be.afterTime(user.createdAt);
+        });
+      });
+
+      it('should work with UUIDs wth default values', function () {
+        var User = this.sequelize.define('User', {
+          id: {
+            primaryKey: true,
+            allowNull: false,
+            unique: true,
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4
+          },
+
+          name: {
+            type: Sequelize.STRING,
+          }
+        });
+
+        return User.sync({ force: true }).then(function () {
+          return User.upsert({ name: 'John Doe' });
         });
       });
 

@@ -1,12 +1,13 @@
 'use strict';
 
+/* jshint -W030 */
+/* jshint -W110 */
 var chai = require('chai')
   , Sequelize = require('../../index')
   , expect = chai.expect
   , Support = require(__dirname + '/support')
   , DataTypes = require(__dirname + '/../../lib/data-types')
   , dialect = Support.getTestDialect()
-  , config = require(__dirname + '/../config/config')
   , sinon = require('sinon')
   , datetime = require('chai-datetime')
   , _ = require('lodash')
@@ -219,29 +220,6 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       });
     });
 
-    it('should allow me to override updatedAt, createdAt, and deletedAt fields with underscored being true', function() {
-      var UserTable = this.sequelize.define('UserCol', {
-        aNumber: Sequelize.INTEGER
-      }, {
-        timestamps: true,
-        updatedAt: 'updatedOn',
-        createdAt: 'dateCreated',
-        deletedAt: 'deletedAtThisTime',
-        paranoid: true,
-        underscored: true
-      });
-
-      return UserTable.sync({force: true}).then(function() {
-        return UserTable.create({aNumber: 4}).then(function(user) {
-          expect(user.updated_on).to.exist;
-          expect(user.date_created).to.exist;
-          return user.destroy().then(function(user) {
-            expect(user.deleted_at_this_time).to.exist;
-          });
-        });
-      });
-    });
-
     it('returns proper defaultValues after save when setter is set', function() {
       var titleSetter = sinon.spy()
         , Task = this.sequelize.define('TaskBuild', {
@@ -274,7 +252,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       });
 
       return UserTable.sync({force: true}).then(function() {
-        return UserTable.create({aNumber: 30}).then(function(user) {
+        return UserTable.create({aNumber: 30}).then(function() {
           return UserTable.count().then(function(c) {
             expect(c).to.equal(1);
           });
@@ -721,7 +699,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         .then(function() {
           return User.create({ username: 'A fancy name' });
         })
-        .then(function(u) {
+        .then(function() {
           return User.find({ where: [] });
         })
         .then(function(u) {
@@ -944,7 +922,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       var self = this;
       return this.User.create({
         username: 'John'
-      }).then(function(user) {
+      }).then(function() {
         return self.User.update({username: self.sequelize.cast('1', dialect === 'mssql' ? 'nvarchar' : 'char')}, {where: {username: 'John'}}).then(function() {
           return self.User.findAll().then(function(users) {
             expect(users[0].username).to.equal('1');
@@ -958,12 +936,36 @@ describe(Support.getTestDialectTeaser('Model'), function() {
 
       return this.User.create({
         username: 'John'
-      }).then(function(user) {
+      }).then(function() {
         return self.User.update({username: self.sequelize.fn('upper', self.sequelize.col('username'))}, {where: {username: 'John'}}).then(function() {
           return self.User.findAll().then(function(users) {
             expect(users[0].username).to.equal('JOHN');
           });
         });
+      });
+    });
+
+    it('does not update virtual attributes', function () {
+      var User = this.sequelize.define('User', {
+        username: Sequelize.STRING,
+        virtual: Sequelize.VIRTUAL
+      });
+
+      return User.create({
+        username: 'jan'
+      }).then(function () {
+        return User.update({
+          username: 'kurt',
+          virtual: 'test'
+        }, {
+          where: {
+            username: 'jan'
+          }
+        });
+      }).then(function () {
+        return User.findAll();
+      }).spread(function (user) {
+        expect(user.username).to.equal('kurt');
       });
     });
 
@@ -1183,7 +1185,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         return UserProject.create({
           userId: 10
         });
-      }).then(function(userProject) {
+      }).then(function() {
         return UserProject.destroy({
           where: {
             userId: 10
@@ -1356,7 +1358,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         return user.destroy({force: true});
       }).then(function() {
         return expect(User.find({where: {username: 'Bob'}})).to.eventually.be.null;
-      }).then(function(user) {
+      }).then(function() {
         return User.find({where: {username: 'Tobi'}});
       }).then(function(tobi) {
         return tobi.destroy();
@@ -1428,7 +1430,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
       var self = this;
 
       return this.User.create({username: 'Peter', secretValue: '42'})
-      .then(function(user) {
+      .then(function() {
         expect(function() {self.User.restore({where: {secretValue: '42'}});}).to.throw(Error, 'Model is not paranoid');
       });
     });
@@ -1566,7 +1568,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
     it('does not modify the passed arguments', function() {
       var options = { where: ['username = ?', 'user1']};
 
-      return this.User.count(options).then(function(count) {
+      return this.User.count(options).then(function() {
         expect(options).to.deep.equal({ where: ['username = ?', 'user1']});
       });
     });
@@ -2017,7 +2019,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
             expect(UserPublic.indexOf('INSERT INTO `UserPublics`')).to.be.above(-1);
           }
         })
-        .then(function(UserPublic) {
+        .then(function() {
           return self.UserSpecialSync.schema('special').create({age: 3})
           .on('sql', function(UserSpecial) {
             expect(UserSpecial).to.exist;
@@ -2063,8 +2065,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
     });
 
     it('uses an existing dao factory and references the author table', function() {
-      var self = this
-        , Post = this.sequelize.define('post', {
+      var Post = this.sequelize.define('post', {
             title: Sequelize.STRING,
             authorId: {
               type: Sequelize.INTEGER,
@@ -2123,8 +2124,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
     });
 
     it('emits an error event as the referenced table name is invalid', function() {
-      var self = this
-        , Post = this.sequelize.define('post', {
+      var Post = this.sequelize.define('post', {
             title: Sequelize.STRING,
             authorId: {
               type: Sequelize.INTEGER,
@@ -2167,6 +2167,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
 
     it('works with comments', function() {
       // Test for a case where the comment was being moved to the end of the table when there was also a reference on the column, see #1521
+      // jshint ignore:start
       var Member = this.sequelize.define('Member', {})
         , Profile = this.sequelize.define('Profile', {
         id: {
@@ -2178,6 +2179,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
           comment: 'asdf'
         }
       });
+      // jshint ignore:end
 
       return this.sequelize.sync({ force: true });
     });
@@ -2451,6 +2453,7 @@ describe(Support.getTestDialectTeaser('Model'), function() {
   });
 
   it('should be possible to use a key named UUID as foreign key', function() {
+    // jshint ignore:start
     var project = this.sequelize.define('project', {
       UserId: {
         type: Sequelize.STRING,
@@ -2471,14 +2474,14 @@ describe(Support.getTestDialectTeaser('Model'), function() {
         }
       }
     });
+    // jshint ignore:end
 
     return this.sequelize.sync({force: true});
   });
 
   describe('bulkCreate errors', function() {
     it('should return array of errors if validate and individualHooks are true', function() {
-      var self = this
-        , data = [{ username: null },
+      var data = [{ username: null },
                   { username: null },
                   { username: null }];
 
