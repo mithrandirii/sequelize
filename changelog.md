@@ -1,4 +1,4 @@
-# Next
+# 2.0.6
 - [BUG] Don't update virtual attributes in Model.update. Fixes [#2860](https://github.com/sequelize/sequelize/issues/2860)
 - [BUG] Fix for newlines in hstore [#3383](https://github.com/sequelize/sequelize/issues/3383)
 - [BUG] Fix unique key handling in Model.update [#3474](https://github.com/sequelize/sequelize/issues/3474)

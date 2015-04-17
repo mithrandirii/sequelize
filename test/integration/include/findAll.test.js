@@ -7,10 +7,8 @@ var chai = require('chai')
   , expect = chai.expect
   , Support = require(__dirname + '/../support')
   , DataTypes = require(__dirname + '/../../../lib/data-types')
-  , datetime = require('chai-datetime')
   , Promise = Sequelize.Promise;
 
-chai.use(datetime);
 chai.config.includeStack = true;
 
 var sortById = function(a, b) {
@@ -128,7 +126,7 @@ describe(Support.getTestDialectTeaser('Include'), function() {
               , tags = results.tags
               , companies = results.companies;
 
-            return Promise.resolve([0, 1, 2, 3, 4]).each(function (i) {
+            return Promise.each([0, 1, 2, 3, 4], function (i) {
               return Promise.props({
                 user: User.create(),
                 products: Product.bulkCreate([
@@ -398,7 +396,7 @@ describe(Support.getTestDialectTeaser('Include'), function() {
             return Tag.findAll();
           })
         ]).spread(function(groups, ranks, tags) {
-          return Promise.resolve([0, 1, 2, 3, 4]).each(function (i) {
+          return Promise.each([0, 1, 2, 3, 4], function (i) {
             return Promise.all([
               User.create(),
               Product.bulkCreate([
@@ -1267,7 +1265,7 @@ describe(Support.getTestDialectTeaser('Include'), function() {
             return Tag.findAll();
           })
         ]).spread(function (groups, ranks, tags) {
-          return Promise.resolve([0, 1, 2, 3, 4]).each(function (i) {
+          return Promise.each([0, 1, 2, 3, 4], function (i) {
             return Promise.props({
               user: User.create({name: 'FooBarzz'}),
               products: Product.bulkCreate([
