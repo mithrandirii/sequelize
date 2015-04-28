@@ -10,8 +10,6 @@ var chai = require('chai')
   , moment = require('moment')
   , QueryGenerator = require('../../../../lib/dialects/sqlite/query-generator');
 
-chai.config.includeStack = true;
-
 if (dialect === 'sqlite') {
   describe('[SQLITE Specific] QueryGenerator', function() {
     beforeEach(function() {
@@ -105,6 +103,10 @@ if (dialect === 'sqlite') {
         {
           arguments: ['myTable', {title: 'VARCHAR(255)', name: 'VARCHAR(255)', otherId: 'INTEGER REFERENCES `otherTable` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION'}],
           expectation: 'CREATE TABLE IF NOT EXISTS `myTable` (`title` VARCHAR(255), `name` VARCHAR(255), `otherId` INTEGER REFERENCES `otherTable` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION);'
+        },
+        {
+          arguments: ['myTable', {id: 'INTEGER PRIMARY KEY AUTOINCREMENT', name: 'VARCHAR(255)'}],
+          expectation: 'CREATE TABLE IF NOT EXISTS `myTable` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` VARCHAR(255));'
         }
       ],
 
@@ -510,7 +512,7 @@ if (dialect === 'sqlite') {
           ],
           expectation: 'CREATE INDEX `user_username_is_admin` ON `User` (`username` ASC, `isAdmin`)'
         }, {
-          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, {}, 'User'],
+          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, 'User'],
           expectation: 'CREATE INDEX `bar` ON `User` (`username`, `isAdmin`)'
         }, {
           arguments: ['User', ['fieldB', {attribute: 'fieldA', collate: 'en_US', order: 'DESC', length: 5}], {

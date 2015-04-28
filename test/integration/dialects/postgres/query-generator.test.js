@@ -11,8 +11,6 @@ var chai = require('chai')
   , current = Support.sequelize
   , _ = require('lodash');
 
-chai.config.includeStack = true;
-
 if (dialect.match(/^postgres/)) {
   describe('[POSTGRES Specific] QueryGenerator', function() {
     beforeEach(function() {
@@ -868,7 +866,7 @@ if (dialect.match(/^postgres/)) {
           ],
           expectation: 'CREATE INDEX \"user_username_is_admin\" ON \"User\" (\"username\" ASC, \"isAdmin\")'
         }, {
-          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, {}, 'User'],
+          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, 'User'],
           expectation: 'CREATE INDEX \"bar\" ON \"User\" (\"username\", \"isAdmin\")'
         }, {
           arguments: ['mySchema.User', ['username', 'isAdmin'], {}, 'User'],
@@ -905,7 +903,7 @@ if (dialect.match(/^postgres/)) {
           expectation: 'CREATE INDEX user_username_is_admin ON User (username ASC, isAdmin)',
           context: {options: {quoteIdentifiers: false}}
         }, {
-          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, {}, 'User'],
+          arguments: ['User', ['username', 'isAdmin'], { indexName: 'bar'}, 'User'],
           expectation: 'CREATE INDEX bar ON User (username, isAdmin)',
           context: {options: {quoteIdentifiers: false}}
         }, {

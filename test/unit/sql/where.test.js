@@ -462,6 +462,131 @@ suite(Support.getTestDialectTeaser('SQL'), function() {
             postgres: "profile->>'id' = CAST('12346-78912' AS TEXT)"
           });
         });
+
+        testsql('data', {
+          nested: {
+            attribute: 'value'
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          },
+          prefix: 'User'
+        }, {
+          default: "([User].[data]#>>'{nested, attribute}') = 'value'"
+        });
+
+        testsql('data', {
+          nested: {
+            attribute: 'value',
+            prop: {
+              $ne: 'None'
+            }
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          },
+          prefix: 'User'
+        }, {
+          default: "(([User].[data]#>>'{nested, attribute}') = 'value' AND ([User].[data]#>>'{nested, prop}') != 'None')"
+        });
+
+        testsql('data', {
+          name: {
+            last: 'Simpson'
+          },
+          employment: {
+            $ne: 'None'
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          },
+          prefix: 'User'
+        }, {
+          default: "(([User].[data]#>>'{name, last}') = 'Simpson' AND ([User].[data]#>>'{employment}') != 'None')"
+        });
+
+        testsql('data.nested.attribute', 'value', {
+          model: {
+            rawAttributes: {
+              data: {
+                type: new DataTypes.JSONB()
+              }
+            }
+          }
+        }, {
+          default: "([data]#>>'{nested, attribute}') = 'value'"
+        });
+
+        testsql('data.nested.attribute', {
+          $in: [3, 7]
+        }, {
+          model: {
+            rawAttributes: {
+              data: {
+                type: new DataTypes.JSONB()
+              }
+            }
+          }
+        }, {
+          default: "([data]#>>'{nested, attribute}') IN (3, 7)"
+        });
+
+        testsql('data', {
+          nested: {
+            attribute: {
+              $gt: 2
+            }
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          }
+        }, {
+          default: "([data]#>>'{nested, attribute}')::double precision > 2"
+        });
+
+        testsql('data', {
+          nested: {
+            "attribute::integer": {
+              $gt: 2
+            }
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          }
+        }, {
+          default: "([data]#>>'{nested, attribute}')::integer > 2"
+        });
+
+        testsql('data', {
+          nested: {
+            attribute: {
+              $gt: new Date()
+            }
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          }
+        }, {
+          default: "([data]#>>'{nested, attribute}')::timestamptz > "+sql.escape(new Date())
+        });
+
+        testsql('data', {
+          $contains: {
+            company: 'Magnafone'
+          }
+        }, {
+          field: {
+            type: new DataTypes.JSONB()
+          }
+        }, {
+          default: '[data] @> \'{"company":"Magnafone"}\''
+        });
       });
     }
 
